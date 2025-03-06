@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Device{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="text-danger">Are you sure you want to delete "{{ device.hostname }}"?</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="{% url 'device_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}NDAS Dashboard{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show w-100 text-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="container-fluid">
+    <!-- Main Content -->
+    <main class="col">
+        <div class="d-flex justify-content-end flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <span class="text-primary">Welcome,</span><i><b class="text-primary">&nbsp;{{ user.username }}</b></i>
+        </div>
+        <h1 class="mt-3">📊 Dashboard</h1>
+        <!-- Bootstrap Cards for Analytics -->
+        <div class="row mt-5">
+            <div class="col-md-2">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Users 👤</h5>
+                        <p class="card-text display-5">{{ total_users }}</p>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-md-2">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Devices 🗃️</h5>
+                        <p class="card-text display-5">{{ total_devices }}</p>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-md-2">
+                <div class="card text-white bg-danger mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Compliance ✅</h5>
+                        <p class="card-text display-5">{{ total_compliance_checks }}</p>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-md-2">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Activity Logs 📉</h5>
+                        <p class="card-text display-5">{{ total_logs }}</p>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-md-2">
+                <div class="card text-white bg-secondary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Simulated Devices </h5>
+                        <p class="card-text display-5">{{ total_simulated_devices }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-white bg-secondary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Tested Devices</h5>
+                        <p class="card-text display-5">{{ total_tested_devices }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col-md-4"></div>
+                <!-- Chart for Activity Logs -->
+                <div class="card mt-4">
+                    <div class="card-body" style="height: 500px; width: 600px;">
+                        <h5 class="card-title">User Activity Over Time</h5>
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </main>
+</div> 
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+        var ctx = document.getElementById('activityChart').getContext('2d');
+        var activityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ activity_dates|safe }},  // Pass date labels from Django
+                datasets: [{
+                    label: 'User Activity',
+                    data: {{ activity_counts|safe }}, // Pass activity counts
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

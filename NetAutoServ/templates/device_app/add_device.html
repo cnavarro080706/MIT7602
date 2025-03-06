@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block title %} Device {% endblock %}
+
+{% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show w-100" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+  <div class="d-flex justify-content-center">
+    <div class="card" style="width: 82rem;">
+      <div class="card-header text-primary">
+        <h3 class="">New Device</h3>
+      </div>
+      <form method="POST" action="{% url 'add_device' %}" class="bg-white shadow rounded p-2" style="font-size:small; font-weight: bold;">
+        {% csrf_token %}
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <!-- Device Information Section -->
+                <div class="accordion accordion-flush" id="device-forms-container">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne" style="background-color: blanchedalmond;">
+                        Device Information
+                      </button>
+                    </h2>
+                    <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#device-forms-container">
+                      <div class="accordion-body">
+                        <h5>Device 1</h5>
+                        <div class="row g-3">
+                          <div class="col">
+                            <input type="text" class="form-control" placeholder="Hostname" name="hostname_1">
+                          </div>
+                          <div class="col">
+                            <input type="text" class="form-control" placeholder="Loopback IP" name="loopback_ip_1">
+                          </div>
+                          <div class="col">
+                            <input type="text" class="form-control" placeholder="Management IP" name="management_ip_1">
+                          </div>
+                          <div class="col">
+                            <input type="text" class="form-control" placeholder="Management GW" name="management_default_gateway_1">
+                          </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                          <div class="col col-md-3">
+                            <select class="form-select" name="vendor_1" id="interswitch_vlan">
+                              {% for vendor in interswitch_vlans %}
+                                <option value="{{ vendor }}">{{ vendor }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="col col-md" id="arista" style="display: none;">
+                            <input type="text" id="vlan_id" name="vlan_id_1" placeholder="INTER_SW VLAN (e.i. VLAN1 - 4094 )" class="form-control">
+                          </div>
+                          <div class="col col">
+                            <input type="text" id="vlan_ip" name="vlan_ip_1" placeholder="INTER_SW P2P (e.i. 192.168.0.0)" class="form-control">
+                          </div>
+                          <div class="col col">
+                            <input type="text" id="vlan_mask" name="vlan_subnet_mask_1" placeholder="VLAN MASK (e.i. 32,31,30...24)" class="form-control">
+                          </div>
+                        </div>
+                        <!-- Delete Button -->
+                        <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
+              </li>
+              
+              <li class="list-group-item">
+                <!-- Device Details Section -->
+                <div class="accordion accordion-flush" id="device_details">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo" style="background-color: blanchedalmond;">
+                        Device Details
+                      </button>
+                    </h2>
+                    <div id="flush-collapseTwo" class="accordion-collapse collapse" data-bs-parent="#device_details">
+                      <div class="accordion-body">
+                        <h5>Device 1</h5>
+                        <div class="row g-3">
+                          <div class="col col-md-3">
+                              <select class="form-select" name="device_model_1" id="device_model">
+                                {% for device_model in device_models %}
+                                  <option value="{{ device_model }}">{{ device_model }}</option>
+                                {% endfor %}
+                              </select>
+                          </div>
+                          <div class="col col-md-3">
+                              <select class="form-select" name="vendor_1" id="vendor">
+                                {% for vendor in vendors %}
+                                  <option value="{{ vendor }}">{{ vendor }}</option>
+                                {% endfor %}
+                              </select>
+                          </div>
+                          <div class="col col-md-3">
+                              <select class="form-select" name="network_tier_1" id="network_tier">
+                                {% for network_tier in network_tiers %}
+                                  <option value="{{ network_tier }}">{{ network_tier }}</option>
+                                {% endfor %}
+                              </select>
+                          </div>
+                          <div class="col col-md-3">
+                            <input type="text" class="form-control" placeholder="LB Code" name="lbcode_1">
+                          </div>  
+                        </div>
+                        <!-- Delete Button -->
+                        <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button> 
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
+              </li>
+              <li class="list-group-item">
+                <!-- Routing Configurations Section -->
+                <div class="accordion accordion-flush" id="routing">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree" style="background-color: blanchedalmond;">
+                        Routing Configurations
+                      </button>
+                    </h2>
+                    <div id="flush-collapseThree" class="accordion-collapse collapse" data-bs-parent="#routing">
+                      <div class="accordion-body">
+                        <h5>Device 1</h5>
+                        <div class="row g-3">
+                          <div class="col col-md-3">
+                            <select class="form-select" name="routing_1" id="routing_protocol">
+                              {% for protocol in routing_protocols %}
+                                <option value="{{ protocol }}">{{ protocol }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <!--Routing Protocols-->
+                          <div class="col col-md-2" id="bgp_config" style="display: none;">
+                            <input type="text" id="bgp_as_leaf" name="bgp_as_leaf_1" placeholder="BGP ASN" class="form-control">
+                          </div>
+                          <div class="col col-md-2" id="ospf_config" style="display: none;">
+                            <input type="text" id="ospf_process_id" name="ospf_process_id_1" placeholder="OSPF Process ID" class="form-control">
+                          </div>
+                          <div class="col col-md-2" id="eigrp_config" style="display: none;">
+                            <input type="text" id="eigrp_as" name="eigrp_as_1" placeholder="EIGRP AS" class="form-control">
+                          </div>
+
+                          <!--Router-id-->
+                          <div class="col col-md-3" id="router_id">
+                            <input type="text" id="router_id_field" name="router_id_1" placeholder="Router ID (loopback ip)" class="form-control">
+                          </div>
+                          <!--Prefixes to be advertised-->
+                          <div class="col col-md-4" id="subnet">
+                            <input type="text" id="subnet" name="networks_1" placeholder='{"network1": "192.168.1.0/24", "network2": "10.0.0.0/8"}' class="form-control">
+                          </div>
+                        </div>
+                        <!--iBGP-->
+                        <div class="row g-3 mt-2">
+                            <div class="col col-md-2" id="ibgp_asn" style="display: none;">
+                                <input type="text" id="ibgp_asn" name="ibgp_asn_1" placeholder="iBGP neighbor ASN" class="form-control">
+                              </div>
+                          <div class="col col-md-3" id="bgp_neighbor_leaf" style="display: none;">
+                            <input type="text" id="bgp_neighbor_leaf" name="bgp_neighbor_leaf_1" placeholder="iBGP neighbor loopback" class="form-control">
+                          </div>
+                        </div>
+                        <!--eBGP-->
+                        <div class="row g-3 mt-2">
+                            <div class="col col-md-2" id="ebgp_asn" style="display: none;">
+                                <input type="text" id="bgp_as_spine" name="bgp_as_spine_1" placeholder="eBGP neighbor ASN" class="form-control">
+                            </div>
+                            <div class="col col-md-2" id="bgp_neighbor_spine1" style="display: none;">
+                            <input type="text" id="bgp_neighbor_spine1" name="bgp_neighbor_spine1_1" placeholder="Spine1 ip address" class="form-control">
+                            </div>
+                            <div class="col col-md-2" id="bgp_neighbor_spine2" style="display: none;">
+                            <input type="text" id="bgp_neighbor_spine2" name="bgp_neighbor_spine2_1" placeholder="Spine2 ip address" class="form-control">
+                            </div>
+                            <div class="col col-md-2" id="bgp_neighbor_spine3" style="display: none;">
+                                <input type="text" id="bgp_neighbor_spine3" name="bgp_neighbor_spine3_1" placeholder="Spine3 ip address" class="form-control">
+                            </div>
+                            <div class="col col-md-2" id="bgp_neighbor_spine4" style="display: none;">
+                                <input type="text" id="bgp_neighbor_spine4" name="bgp_neighbor_spine4_1" placeholder="Spine4 ip address" class="form-control">
+                            </div>    
+                        </div>
+                        <!-- Delete Button -->
+                        <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button> 
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
+              </li>
+            </div>
+          </ul>
+          <button type="submit" class="btn btn-primary btn-sm mt-2 mb-2 ms-4">Submit</button>
+          <a href="{% url 'device_list'%}" class="btn btn-secondary btn-sm"> Cancel </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Routing Protocol Configuration
+    document.addEventListener('DOMContentLoaded', () => {
+    const routingProtocolSelect = document.getElementById('routing_protocol');
+
+    if (routingProtocolSelect) {
+      const bgpConfig = document.getElementById('bgp_config');
+      const ospfConfig = document.getElementById('ospf_config');
+      const eigrpConfig = document.getElementById('eigrp_config');
+      
+      // New BGP-specific input elements
+      const bgpNeighborLeaf = document.getElementById('bgp_neighbor_leaf');
+      const ibgpAsn = document.getElementById('ibgp_asn');
+      const ebgpAsn = document.getElementById('ebgp_asn');
+      const bgpNeighborSpine1 = document.getElementById('bgp_neighbor_spine1');
+      const bgpNeighborSpine2 = document.getElementById('bgp_neighbor_spine2');
+      const bgpNeighborSpine3 = document.getElementById('bgp_neighbor_spine3');
+      const bgpNeighborSpine4 = document.getElementById('bgp_neighbor_spine4');
+
+
+      routingProtocolSelect.addEventListener('change', () => {
+        const selectedProtocol = routingProtocolSelect.value;
+
+        if (selectedProtocol === 'BGP') {
+          // Show BGP-related inputs
+          bgpConfig.style.display = 'block';
+          ospfConfig.style.display = 'none';
+          eigrpConfig.style.display = 'none';
+
+          // Show specific iBGP inputs
+          ibgpAsn.style.display = 'block';
+          bgpNeighborLeaf.style.display = 'block';
+          
+          // Show specific eBGP inputs
+          ebgpAsn.style.display = 'block';
+          bgpNeighborSpine1.style.display = 'block';
+          bgpNeighborSpine2.style.display = 'block';
+         bgpNeighborSpine3.style.display = 'block';
+          bgpNeighborSpine4.style.display = 'block';
+
+
+
+        } else if (selectedProtocol === 'OSPF') {
+          // Show OSPF-related inputs
+          bgpConfig.style.display = 'none';
+          ospfConfig.style.display = 'block';
+          eigrpConfig.style.display = 'none';
+
+          // Hide specific iBGP inputs
+          bgpNeighborLeaf.style.display = 'none';
+          ibgpAsn.style.display = 'none';
+
+          // Hide specific eBGP inputs
+            ebgpAsn.style.display = 'none';
+            bgpNeighborSpine1.style.display = 'none';
+            bgpNeighborSpine2.style.display = 'none';
+            bgpNeighborSpine3.style.display = 'none';
+            bgpNeighborSpine4.style.display = 'none';
+
+        } else if (selectedProtocol === 'EIGRP') {
+          // Show EIGRP-related inputs
+          bgpConfig.style.display = 'none';
+          ospfConfig.style.display = 'none';
+          eigrpConfig.style.display = 'block';
+
+          // Hide specific iBGP inputs
+          bgpNeighborLeaf.style.display = 'none';
+          ibgpAsn.style.display = 'none';
+
+          // Hide specific eBGP inputs
+            ebgpAsn.style.display = 'none';
+            bgpNeighborSpine1.style.display = 'none';
+            bgpNeighborSpine2.style.display = 'none';
+            bgpNeighborSpine3.style.display = 'none';
+            bgpNeighborSpine4.style.display = 'none';
+
+        } else {
+          // Hide all configurations if no valid protocol is selected
+          bgpConfig.style.display = 'none';
+          ospfConfig.style.display = 'none';
+          eigrpConfig.style.display = 'none';
+
+          // Hide specific iBGP inputs
+          bgpNeighborLeaf.style.display = 'none';
+          ibgpAsn.style.display = 'none';
+        }
+      });
+    } else {
+      console.error("Element with ID 'routing_protocol' not found.");
+    }
+  });
+  // InterSwitch VLAN Configuration
+    document.addEventListener('DOMContentLoaded', () => {
+        const interswitchVlanSelect = document.getElementById('interswitch_vlan');
+    
+        if (interswitchVlanSelect) {
+        const vlan4001 = document.getElementById('arista');
+    
+        interswitchVlanSelect.addEventListener('change', () => {
+            const selectedVlan = interswitchVlanSelect.value;
+    
+            vlan4001.style.display = selectedVlan === 'arista' ? 'block' : 'none';
+    
+        });
+        }
+    });
+// Adding a new device form
+document.addEventListener("DOMContentLoaded", function () {
+  const maxDevices = 2; // Limit the number of devices per section
+  const sections = {
+    "device-forms-container": 1, // Initial device count for Device Information
+    "device_details": 1,         // Initial device count for Device Details
+    "routing": 1,                // Initial device count for Routing Configurations
+  };
+
+  // Add a new form to a specified section
+  function addNewForm(sectionId) {
+    if (sections[sectionId] >= maxDevices) {
+      alert(`This Pilot version can only add up to ${maxDevices} Devices.`);
+      return;
+    }
+
+    sections[sectionId]++;
+
+    // Select the first .accordion-body for cloning
+    const container = document.getElementById(sectionId);
+    const firstAccordionBody = container.querySelector(".accordion-body");
+    if (!firstAccordionBody) {
+      console.error(`Accordion body not found in section ${sectionId}`);
+      return;
+    }
+
+    // Clone the .accordion-body
+    const newAccordionBody = firstAccordionBody.cloneNode(true);
+
+    // Update inputs and titles in the cloned form
+    Array.from(newAccordionBody.querySelectorAll("input, select")).forEach((element) => {
+      const name = element.getAttribute("name");
+      if (name) {
+        const newName = name.replace(/\d+$/, sections[sectionId]); // Update name with the current section count
+        element.setAttribute("name", newName);
+        element.value = ""; // Clear input value
+      }
+
+      // Reset dropdowns to default value
+      if (element.tagName === "SELECT") {
+        const defaultOption = element.querySelector("option[value='']");
+        if (defaultOption) {
+          element.value = ""; // Reset to the default placeholder option
+        }
+      }
+    });
+
+    // Update the title inside the cloned form
+    const titleElement = newAccordionBody.querySelector("h5");
+    if (titleElement) {
+      titleElement.innerText = `Device ${sections[sectionId]}`; // Update the title
+    }
+
+    // Add a delete button if not present
+    let deleteButton = newAccordionBody.querySelector(".delete-device-btn");
+    if (!deleteButton) {
+      deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "btn mt-2 delete-device-btn";
+      deleteButton.innerHTML = '<i class="bi bi-trash" title="delete item"></i>';
+      newAccordionBody.appendChild(deleteButton);
+    }
+
+    // Append the cloned body to the accordion
+    container.querySelector(".accordion-collapse").appendChild(newAccordionBody);
+  }
+
+  // Event delegation for delete buttons
+  document.body.addEventListener("click", function (event) {
+    if (event.target.closest(".delete-device-btn")) {
+      const accordionBodyToDelete = event.target.closest(".accordion-body");
+
+      // Prevent deletion of the first item
+      const titleElement = accordionBodyToDelete.querySelector("h5");
+      if (titleElement && titleElement.innerText === "Device 1") {
+        alert("By default, Device 1 cannot be deleted.");
+        return;
+      }
+
+      const sectionId = accordionBodyToDelete.closest(".accordion-flush").id;
+      accordionBodyToDelete.remove();
+
+      if (sectionId && sections[sectionId]) {
+        sections[sectionId]--;
+      }
+    }
+  });
+
+  // Add button functionality for each section
+  Object.keys(sections).forEach((sectionId) => {
+    const addButton = document.querySelector(`#${sectionId}`).closest("li").querySelector("#add-device-btn");
+    if (addButton) {
+      addButton.addEventListener("click", function () {
+        addNewForm(sectionId);
+      });
+    }
+  });
+});
+
+</script>
+{% endblock %}

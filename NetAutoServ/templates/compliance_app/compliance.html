@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Policy Compliance{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-primary mb-3 shadow-lg"">
+                <div class="card-header text-primary">General Device Information</div>
+                <div class="card-body text-primary">
+                    <h6 class="card-title">General Details</h6>
+                    <div class="table-responsive rounded">
+                        <table class="table table-hover overflow-auto table-striped text-center mt-2 align-middle" style="font-size: 12px;">
+                            <thead class="shadow-lg table-secondary">
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Loopback0</th>
+                                    <th>Status</th>
+                                    <th>LBCode</th>
+                                    <th>Vendor</th>
+                                    <th>Network Tier</th>
+                                    <!-- <th>Device Model</th> -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in devices %}
+                                <tr>    
+                                    <td>
+                                        {% if device.status == "decommissioned" %}
+                                            <span class="text-danger fw-bold">{{ device.hostname }}</span>
+                                        {% else %}
+                                            <span class="text-secondary fw-bold">{{ device.hostname }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ device.loopback_ip }}</td>
+                                    <td>
+                                        {% if device.status == "active" %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif device.status == "decommissioned" %}
+                                        <span class="badge bg-danger">Retired</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Under Deployment</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ device.lbcode }}</td>
+                                    <td>{{ device.vendor }}</td>
+                                    <td>{{ device.network_tier }}</td>
+                                    <!-- <td>{{ device.device_model }}</td> -->
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card border-primary mb-3 shadow-lg">
+                <div class="card-header text-primary">Device Configuration Assurance</div>
+                <div class="card-body text-primary">
+                    <h6 class="card-title">Global Configuration</h6>
+                    <div class="table-responsive rounded">
+                        <table class="table table-hover overflow-auto table-striped text-center align-middle" style="font-size: 12px;">
+                            <thead class="shadow-lg table-secondary">
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Hostname</th>
+                                    <th>QSFP Mode(4x10G)</th>
+                                    <th>RIBD</th>
+                                    <th>Multi-Agent</th>
+                                    <th>EOS Code</th>
+                                    <th>MAC Timer</th>
+                                    <th>STP</th>
+                                    <th>NTP</th>
+                                    <th>IP Routing</th>
+                                    <th>InterSW</th>
+                                    <th>InterSW L3</th>
+                                    <th>InterSW L2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compliance-table">
+                                {% for config in configs %}
+                            
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-primary mb-3 shadow-lg">
+                <div class="card-header text-primary">Device Specific Configuration</div>
+                <div class="card-body text-primary">
+                    <h6 class="card-title">Device Interfaces</h6>
+                    <div class="table-responsive rounded">
+                        <table class="table table-hover overflow-auto table-striped text-center mt-2 align-middle" style="font-size: 11px;">
+                            <thead class="shadow-lg table-secondary">
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Loopback0</th>
+                                    <th>Mgmt1 IP</th>
+                                    <th>Mgmt1 Route</th>
+                                    <th>Spine1 Uplink</th>
+                                    <th>Spine2 Uplink</th>
+                                    <!-- <th>Spine3 Uplink</th>
+                                    <th>Spine4 Uplink</th> -->
+                                    <!-- <th>Device Model</th> -->
+                                </tr>
+                            </thead>
+                            <tbody id="device-specific-others-table">
+                                {% for config in configs %}
+                            
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary mb-3 shadow-lg">
+                <div class="card-header text-primary">Device Specific Configuration</div>
+                <div class="card-body text-primary">
+                    <h6 class="card-title">BGP Configuration</h6>
+                    <div class="table-responsive rounded">
+                        <table class="table table-hover overflow-auto table-striped text-center align-middle" style="font-size: 11px;">
+                            <thead class="shadow-lg table-secondary">
+                                <tr>
+                                    <th>Device</th>
+                                    <th>BGP AS</th>
+                                    <th>Router-Id</th>
+                                    <th>BGP Neighbor</th>
+                                    <th>BGP Network</th>
+                                    <th>BGP Max Path</th>
+                                </tr>
+                            </thead>
+                            <tbody id="device-specific-bgp-table">
+                                {% for config in configs %}
+                            
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary mb-3 shadow-lg">
+                <div class="card-header text-primary">Device Specific Configuration</div>
+                <div class="card-body text-primary">
+                    <h6 class="card-title">IGP Routing Configuration</h6>
+                    <div class="table-responsive rounded">
+                        <table class="table table-hover overflow-auto table-striped text-center align-middle" style="font-size: 11px;">
+                            <thead class="shadow-lg table-secondary">
+                                <tr>
+                                    <th>Device</th>
+                                    <th>OSPF</th>
+                                    <th>OSPF ID</th>
+                                    <th>EIGRP</th>
+                                    <th>EIGRP AS</th>
+                                    <th>Static Route</th>
+                                </tr>
+                            </thead>
+                            <tbody id="device-specific-routing-table">
+                                {% for config in configs %}
+                            
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-3">
+    <button id="validate-btn" class="btn btn-warning btn-sm shadow-sm">Revalidate Compliance</button>
+</div>
+
+{% endblock %}

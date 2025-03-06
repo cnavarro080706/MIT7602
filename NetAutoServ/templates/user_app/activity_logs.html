@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Log History{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-primary mb-3 shadow-lg">
+                <div class="card-header text-primary">User Logs</div>
+                <div class="card-body text-secondary">
+                    <h6 class="card-title">User Activity Logs</h6>
+                    <div class="overflow-auto;">
+                        <table class="table table-bordered" style="font-size:12px;">
+                            <thead class="">
+                                <tr class="text-center">
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Description</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center">
+                                {% for log in logs %}
+                                <tr>
+                                    <td class="text-secondary">{{ log.user.username }}</td>
+                                    <td class="text-secondary">{{ log.action }}</td>
+                                    <td class="text-secondary">{{ log.description }}</td>
+                                    <td class="text-secondary">{{ log.timestamp }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No activity logs found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Display automation logs (only for admin) -->
+        {% if log_entries %}
+        <div class="col-md-6">
+            <div class="card border-primary mb-3 shadow-lg"">
+                <div class="card-header text-primary">History Logging</div>
+                <div class="card-body text-secondary">
+                    <h6 class="card-title">Application Logs</h6>
+                    <hr>
+                    <!-- Right Column: Automation Log -->
+                    <div class="overflow-auto" style="height: 700px; font-size: 12px;">
+                        {% for entry in log_entries %}
+                            <p style="margin: 0; white-space: pre-wrap;">{{ entry }}</p>
+                        {% empty %}
+                            <p class="text-center">No automation logs found.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

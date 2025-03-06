@@ -1,0 +1,10 @@
+# Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+venv/
+
+# Login creds
+.env

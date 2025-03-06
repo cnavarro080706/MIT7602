@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} Devices {% endblock %}
+
+
+{% block content %}
+
+{% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show w-100" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+
+<div class="container-fluid mt-5">
+    <div class="row d-flex">
+        <div class="col-md-12">
+            <h1>Devices</h1>
+            <div class="container-fluid d-flex justify-content-between align-items-center mb-2"> 
+                <div class="me-2">
+                <a href="{% url 'add_device' %}" class="btn btn-primary btn-sm">Add Device</a>
+                </div>
+                <!-- <div class="d-flex ms-auto">
+                    <a href="{% url 'naas' %}" class="btn btn-sm btn-info me-2"><i class="bi bi-rocket-takeoff" title="Generate Config"></i></a>
+                    <a href="{% url 'emulator_home' %}" class="btn btn-sm btn-dark"><i class="bi bi-diagram-3" title="Emulator"></i></a>
+                </div> -->
+            </div>
+
+            <table class="table table-hover overflow-auto text-center table-striped shadow-sm" style="font-size: small;">
+                <thead class="shadow-lg table-secondary">
+                    <tr class="text-primary">
+                        <th>Hostname</th>
+                        <th>Status</th>
+                        <th>Role</th>
+                        <th>Vendor</th>
+                        <th>LBCode</th>
+                        <th>Loopback IP</th>
+                        <th>Routing</th>
+                        <th>Leaf ASN</th>
+                        <th>Spine ASN</th>
+                        <th>InterSwitch</th>
+                        <th>Spine1</th>
+                        <th>Spine2</th>
+                        <th>Spine3</th>
+                        <th>Spine4</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>{{ device.hostname }}</td>
+                        <td>
+                        {% if device.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elif device.status == 'decommissioned' %}
+                            <span class="badge bg-danger">Retired</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Under Deployment</span>
+                        {% endif %}
+                        </td>
+                        <td>
+                        {% if device.role == 'router' %}
+                            <span class="badge bg-primary">Router</span>
+                        {% elif device.role == 'layer3' %}
+                            <span class="badge bg-info">Layer3</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Layer2</span>
+                        {% endif %}
+                        </td>
+                        <td>{{ device.vendor }}</td>
+                        <td>{{ device.lbcode }}</td>
+                        <td>{{ device.loopback_ip }}</td>
+                        <td>{{ device.routing }}</td>
+                        <td>{{ device.bgp_as_leaf }}</td>
+                        <td>{{ device.bgp_as_spine }}</td>
+                        <td>{{ device.vlan_ip }}/31</td>
+                        <td>{{ device.bgp_neighbor_spine1 }}/31</td>
+                        <td>{{ device.bgp_neighbor_spine2 }}/31</td>
+                        <td>{{ device.bgp_neighbor_spine3 }}/31</td>
+                        <td>{{ device.bgp_neighbor_spine4 }}/31</td>
+                        <td>
+                            <a href="#" class="btn btn-primary btn-sm" onclick="loadConfig({{ device.id }})">
+                                <i class="bi bi-eye" title="View Configuration"></i>
+                            </a>
+                            <a href="{% url 'naas' device.id %}" class="btn btn-sm btn-info"><i class="bi bi-rocket-takeoff" title="Generate Config"></i></a>
+                            <a href="{% url 'emulator_home' %}" class="btn btn-sm btn-dark"><i class="bi bi-diagram-3" title="Emulator"></i></a>
+                            <a href="{% url 'edit_device' device.id %}" class="btn btn-sm btn-warning"><i class="bi bi-pencil" title="Edit"></i></a>
+                            <a href="{% url 'delete_device' device.id %}" class="btn btn-danger me-1 btn-sm delete-device" data-id="{{ device.id }}" onclick="alert('Do you really want to delete the entry?')"><i class="bi bi-trash" title="Delete"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+                <!-- Bootstrap Modal -->
+                <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="configModalLabel">Device Configuration</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <pre id="configContent" class="bg-light p-3"></pre>
+                            </div>
+                            <div class="modal-footer">
+                                <!-- Add Copy and Download buttons -->
+                                <button type="button" class="btn btn-secondary" onclick="copyConfig()">
+                                    <i class="bi bi-copy" title="Copy"></i>
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="downloadConfig(document.getElementById('configModalLabel').innerText.replace('Device Configuration for ', ''))">
+                                    <i class="bi bi-download" title="Download"></i>
+                                </button>
+                                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+  // for the navbar
+  const sidebar = document.getElementById('sidebar'); 
+  const sidebarToggle = document.getElementById('sidebarToggle'); // Get the toggle element 
+  let isCollapsed = false; 
+
+  sidebarToggle.addEventListener('click', () => { 
+      isCollapsed = !isCollapsed; 
+      sidebar.classList.toggle('collapsed', isCollapsed); 
+
+      // Change toggle icon 
+      sidebarToggle.innerHTML = isCollapsed ? '<i class="bi bi-caret-right-fill text-warning"></i>' : '<i class="bi bi-caret-left-fill text-warning"></i>'; 
+
+      // Adjust text visibility in collapsed mode 
+      const textCollapsedElements = document.querySelectorAll('.text-collapsed'); 
+      textCollapsedElements.forEach(element => { 
+          element.style.display = isCollapsed ? 'none' : 'inline'; 
+      }); 
+  });
+  // end of navbar
+
+  // Fetch and display configuration
+    function loadConfig(deviceId) {
+        fetch(`/view-configuration/${deviceId}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("configContent").innerText = data.config_text;
+                document.getElementById("configModalLabel").innerText = `Device Configuration for ${data.hostname}`;
+                new bootstrap.Modal(document.getElementById("configModal")).show();
+            })
+            .catch(error => {
+                console.error("Error loading configuration:", error);
+            });
+    }
+
+    // Copy configuration to clipboard
+    function copyConfig() {
+        const configText = document.getElementById("configContent").innerText;
+        navigator.clipboard.writeText(configText)
+            .then(() => {
+                alert("Configuration copied to clipboard!");
+            })
+            .catch((error) => {
+                console.error("Failed to copy configuration:", error);
+                alert("Failed to copy configuration. Please try again.");
+            });
+    }
+
+    // Download configuration as a text file
+    function downloadConfig(hostname) {
+        const configText = document.getElementById("configContent").innerText;
+        const blob = new Blob([configText], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${hostname}.txt`; // Use the hostname in the file name
+        link.click();
+        URL.revokeObjectURL(link.href);
+}
+
+</script>
+{% endblock %}
+

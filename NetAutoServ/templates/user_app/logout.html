@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Logout{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid d-flex flex-column justify-content-center align-items-center min-vh-100 py-5">
+    <h4 class="fw-bold text-danger">You have been logged out successfully! </h4>
+    <p class="text-center text-muted mt-3" style="font-size:small; font-weight: bold;"><span>Click 
+        <a href="{% url 'index' %}">here</a> to login.</span></p>
+</div>
+<!-- Global Page footer -->  
+<div class="footer fixed-bottom text-center text-muted" id="footer">
+    <hr>
+    <p class="ms-5"><small>app-version - 01.1006.2024 | Chris Navarro | NDAS&trade; | 2024 | 
+        <a href="#"><i class="bi bi-facebook text-primary"></i></a>
+        <a href="#"><i class="bi bi-messenger text-primary"></i></a>
+        <a href="https://www.linkedin.com/in/chris-navarro-42378572/"><i class="bi bi-linkedin text-primary"></i></a>
+        <a href="https://join.slack.com/t/newworkspace-uf11677/shared_invite/zt-2qmgr2z44-H0wXd0VcxmT~AIybfHgJbA"><i class="bi bi-slack text-primary"></i></a>
+    </small></p>
+</div>
+
+{% endblock %}

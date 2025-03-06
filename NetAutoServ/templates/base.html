@@ -1,0 +1,202 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>{% block title %}{% endblock %}</title>
+    <!-- Bootstrap CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <!-- Include jQuery from a CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Vis.js CDN -->
+    <link href="https://unpkg.com/vis-network/styles/vis-network.css" rel="stylesheet">
+    <!-- Vanilla JS Datepicker CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/css/datepicker-bs5.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'ndas_app/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'naas_app/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'user_app/styles.css' %}">
+    <!-- <link rel="stylesheet" href="{% static 'device_app/styles.css' %}"> -->
+   
+
+  </head>
+  <style>
+    .sidebar-link {
+        position: relative; /* Needed for the badge positioning */
+    }
+
+    .sidebar-link .badge {
+        position: absolute;
+        font-size: 8px;
+        top:5px;  /* Adjust as necessary */
+        right: 206px;  /* Adjust as necessary */
+    }
+  </style>
+  <body>
+    <div class="wrapper">
+        <aside id="sidebar">   
+            <div class="d-flex mt-3">
+                <button class="toggle-btn" type="button">
+                    <i class="bi bi-ui-checks-grid text-info"></i>
+                    <!-- <i class="toggle-icon bi bi-arrow-right-circle-fill text-warning"></i> -->
+                </button>
+                <div class="sidebar-logo">
+                    <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'index' %}{% endif %}" class="text-decoration-none">NDAS&nbsp;<small>v1.0</small></a><br>
+                </div>
+
+            </div>
+            
+            <hr class="text-info">
+            <!-- <hr class="text-info"> -->
+            <ul class="sidebar-nav">
+                {% if request.user.is_authenticated %}
+                <li class="sidebar-item">
+                    <a href="{% url 'profile' %}" class="sidebar-link text-decoration-none">
+                        <i class="bi bi-person-circle text-info" title="{{ user.username }}"></i>
+                        <span class="text-info" style="font-size:medium;">{{ user.username }}&nbsp;<small style="font-size:10px;">🟢</small></span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{% url 'dashboard' %}" class="sidebar-link text-decoration-none">
+                        <i class="bi bi-speedometer text-warning" title="Dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link collapsed has-dropdown text-decoration-none" data-bs-toggle="collapse"
+                       data-bs-target="#automationDropdown" aria-expanded="false" aria-controls="automationDropdown">
+                        <i class="bi bi-columns-gap text-danger"></i>
+                        <span>Automation</span>
+                    </a>
+                    <ul id="automationDropdown" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                        <!-- <li class="sidebar-item">
+                            <a href="{% url 'device_list' %}" class="sidebar-link text-decoration-none">Devices</a>
+                        </li> -->
+                        <li class="sidebar-item">
+                            <a href="{% url 'device_list' %}" class="sidebar-link text-decoration-none">Network as a Service</a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{% url 'emulator_home' %}" class="sidebar-link text-decoration-none">Simulation/Testing</a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{% url 'compliance_list' %}" class="sidebar-link text-decoration-none">Policy Compliance</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{% url 'activity_logs' %}" class="sidebar-link text-decoration-none">
+                        <i class="bi bi-bell" id="notification-icon" title="Logs"></i>
+                        <span>History Logs</span>
+                        {% if unread_count > previous_unread_count %}
+                            <!-- If unread_count has increased, set badge to bg-danger -->
+                            <span class="badge bg-danger rounded-pill" id="log-badge">{{ unread_count }}</span>
+                        {% else %}
+                            <!-- If unread_count is the same, set badge to bg-light -->
+                            <span class="badge bg-light text-dark rounded-pill" id="log-badge">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link text-decoration-none">
+                        <i class="bi bi-gear text-light" title="Settings"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+            <hr class="text-info">
+            <div class="sidebar-footer mb-2 pb-2">
+                <a href="{% url 'logout' %}" class="sidebar-link text-decoration-none" onclick="return confirm('Do you want to leave the page?')">
+                    <i class="bi bi-box-arrow-left" title="logout"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+            {% else %}
+            <li class="sidebar-item">
+                <a href="#" class="sidebar-link collapsed has-dropdown text-decoration-none" data-bs-toggle="collapse"
+                    data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                    <i class="bi bi-shield-lock text-warning"></i>
+                    <span>Authentication</span>
+                </a>
+                <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                    <li class="sidebar-item">
+                        <a href="{%url 'login' %}" class="sidebar-link text-decoration-none">Login</a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{%url 'register' %}" class="sidebar-link text-decoration-none">Register</a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}     
+        </aside>
+        <div class="main">
+            {% block content %}
+            <!-- Default content -->
+            {% endblock %}
+        
+       
+        </div>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let previousUnreadCount = parseInt(document.querySelector("#log-badge").textContent) || 0;
+
+    function updateLogBadge() {
+        fetch("/get-unread-log-count/")
+            .then(response => response.json())
+            .then(data => {
+                let badge = document.querySelector("#log-badge");
+                if (badge) {
+                    let newUnreadCount = data.unread_count;
+
+                    // Update the badge text only if the count has changed
+                    if (newUnreadCount !== previousUnreadCount) {
+                        badge.textContent = newUnreadCount;
+
+                        if (newUnreadCount > previousUnreadCount) {
+                            // If there are new unread logs, set badge to red
+                            badge.classList.remove("bg-light", "text-dark");
+                            badge.classList.add("bg-danger");
+                        } else if (newUnreadCount === 0) {
+                            // If all logs are read, reset badge to light mode
+                            badge.classList.remove("bg-danger");
+                            badge.classList.add("bg-light", "text-dark");
+                        }
+
+                        // Update previous count to current count
+                        previousUnreadCount = newUnreadCount;
+                    }
+                }
+            })
+            .catch(error => console.error("Error fetching unread logs:", error));
+    }
+
+    setInterval(updateLogBadge, 5000);  // Poll every 5 seconds
+});
+</script>
+  </body>
+    <!-- Bootstrap JS script -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <!-- Vanilla JS Datepicker JS -->
+    <script src="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/js/datepicker-full.min.js"></script>
+    <!-- Vis.js script -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <!--Chat.js CDN-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS script -->  
+    <script src="{% static 'ndas_app/script.js' %}"></script>
+    <script src="{% static 'naas_app/script.js' %}"></script>
+    <script src="{% static 'user_app/script.js' %}"></script>
+    <script src="{% static 'compliance_app/script.js' %}"></script>
+
+</html>

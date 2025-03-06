@@ -1,0 +1,501 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Testing & Simulation{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid d-flex flex-column align-items-center py-5" style="font-size: 13px;">
+    <h3 class="text-primary fw-bold text-center">Device Testing & Simulation</h3>
+    
+    <div class="row w-100 justify-content-center">
+        <div class="mb-2 bordered rounded">
+            <a href="{% url 'device_list' %}" class="btn btn-info btn-sm"><i class="bi bi-house-door"></i> Home</a>
+        </div>
+        <!-- Devices List -->
+        <div class="col-md-3">
+            <div class="card border-primary mb-3 shadow-lg p-3">
+                <h5 class="text-primary fw-bold">Devices</h5>
+                <ul class="list-group list-group-flush">
+                    {% for device in devices %}
+                        <li class="list-group-item d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="bi bi-router text-primary"></i>
+                                <span id="device-name-{{ device.id }}" class="device-name ms-1 fw-semibold">{{ device.hostname }}</span>
+                            </div>
+                            <div>
+                                <button class="btn btn-success btn-sm start-btn" data-device-hostname="{{ device.hostname }}" data-device-id="{{ device.id }}">Start</button>
+                                <button class="btn btn-danger btn-sm stop-btn" data-device-hostname="{{ device.hostname }}" data-device-id="{{ device.id }}" disabled>Stop</button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Create Connection -->
+            <div class="card border-primary mb-3 shadow-lg mt-4 p-3">
+                <h5 class="text-primary fw-bold">Create Connection</h5>
+                <form>
+                    <div class="mb-2">
+                        <label class="fw-bold">Select Device 1:</label>
+                        <select class="form-select form-select-sm" id="device1">
+                            {% for device in devices %}
+                            <option value="{{ device.id }}">{{ device.hostname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="fw-bold">Select Interface:</label>
+                        <select class="form-select form-select-sm" id="interface1">
+                            <option selected>Select Interface</option>
+                            <option value="Eth1">Ethernet1</option>
+                            <option value="Eth2">Ethernet2</option>
+                            <option value="Eth3">Ethernet3</option>
+                            <option value="Eth4">Ethernet4</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="fw-bold">Select Device 2:</label>
+                        <select class="form-select form-select-sm" id="device2">
+                            {% for device in devices %}
+                            <option value="{{ device.id }}">{{ device.hostname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="fw-bold">Select Interface:</label>
+                        <select class="form-select form-select-sm" id="interface2">
+                            <option selected>Select Interface</option>
+                            <option value="Eth1">Ethernet1</option>
+                            <option value="Eth2">Ethernet2</option>
+                            <option value="Eth3">Ethernet3</option>
+                            <option value="Eth4">Ethernet4</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary w-100 btn-sm mt-2" id="connect-btn"><i class="bi bi-link-45deg"></i> Connect Devices</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Topology Section -->
+        <div class="col-md-6">
+            <div class="card border-primary mb-3 shadow-lg p-3 text-center">
+                <h5 class="text-primary fw-bold">Topology</h5>
+                <div id="canvas" class="border rounded bg-light" style="height: 700px; padding: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- Device Logs -->
+        <div class="col-md-3">
+            <div class="card border-primary mb-3 shadow-lg p-3">
+                <h5 class="text-primary fw-bold">Device Logs</h5>
+                <div id="log-panel" class="border rounded bg-light p-2 overflow-auto" style="height: 700px;">
+                    <p class="text-muted">No logs yet...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById('canvas');
+    if (!container) {
+        console.error("Canvas element not found!");
+        return;
+    }
+
+    const devicePositions = {{ device_positions|safe }};
+    const nodes = new vis.DataSet([
+        {% for device in devices %}
+        {
+            id: {{ device.id }},
+            label: '{{ device.hostname }}',
+            shape: 'image',
+            image: '/static/emulator_app/images/switch_off.png',
+            x: devicePositions[{{ device.id }}]?.x || Math.random() * 800,
+            y: devicePositions[{{ device.id }}]?.y || Math.random() * 500,
+            width: 50,
+            height: 50,
+        },
+        {% endfor %}
+    ]);
+
+    const edges = new vis.DataSet([
+        {% for connection in connections %}
+        {
+            from: {{ connection.source_device.id }},
+            to: {{ connection.target_device.id }},
+            label: '{{ connection.interface1 }} - {{ connection.interface2 }}',
+            color: { color: 'black' }, // Solid black line
+            width: 2,
+            smooth: false
+        },
+        {% endfor %}
+    ]);
+
+    const data = { nodes, edges };
+    const options = { 
+        physics: false, 
+        edges: { smooth: false } // Straight lines
+    };
+    const network = new vis.Network(container, data, options);
+
+    // Handle device start
+    document.querySelectorAll(".start-btn").forEach(button => {
+        button.addEventListener("click", function () {
+            const deviceId = this.getAttribute("data-device-id");
+            nodes.update({ id: deviceId, image: "/static/emulator_app/images/switch_on.png" });
+
+            this.disabled = true;
+            const stopBtn = this.parentElement.querySelector(".stop-btn");
+            stopBtn.disabled = false;
+        });
+    });
+
+    // Handle device stop
+    document.querySelectorAll(".stop-btn").forEach(button => {
+        button.addEventListener("click", function () {
+            const deviceId = this.getAttribute("data-device-id");
+            nodes.update({ id: deviceId, image: "/static/emulator_app/images/switch_off.png" });
+
+            this.disabled = true;
+            const startBtn = this.parentElement.querySelector(".start-btn");
+            startBtn.disabled = false;
+        });
+    });
+
+    // Handle device connection
+    document.getElementById("connect-btn").addEventListener("click", function () {
+        let device1Select = document.getElementById("device1");
+        let device2Select = document.getElementById("device2");
+
+        let device1Id = device1Select.value;
+        let device2Id = device2Select.value;
+
+        let device1Hostname = device1Select.options[device1Select.selectedIndex].text;
+        let device2Hostname = device2Select.options[device2Select.selectedIndex].text;
+
+        let interface1 = document.getElementById("interface1").value;
+        let interface2 = document.getElementById("interface2").value;
+
+        if (device1Id === device2Id) {
+            alert("You cannot connect a device to itself!");
+            return;
+        }
+
+        fetch("/emulator/connect/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                device1: device1Id,
+                interface1: interface1,
+                device2: device2Id,
+                interface2: interface2
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Connected ${device1Hostname} (${interface1}) to ${device2Hostname} (${interface2})`);
+
+                // Add connection to Vis.js topology
+                edges.add({
+                    from: device1Id,
+                    to: device2Id,
+                    label: `${interface1} - ${interface2}`,
+                    color: { color: 'black' },
+                    width: 2,
+                    smooth: false
+                });
+
+                // Append connection to the UI list with a Delete button
+                let connectionList = document.getElementById("connection-list");
+                let listItem = document.createElement("li");
+                listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+                listItem.innerHTML = `
+                    ${device1Hostname} (${interface1}) ↔ ${device2Hostname} (${interface2})
+                    <button class="btn btn-sm btn-danger delete-connection-btn" 
+                            data-source="${device1Id}" data-target="${device2Id}">
+                        Delete
+                    </button>
+                `;
+                connectionList.appendChild(listItem);
+
+                // Add event listener for delete button
+                listItem.querySelector(".delete-connection-btn").addEventListener("click", function () {
+                    let sourceId = this.getAttribute("data-source");
+                    let targetId = this.getAttribute("data-target");
+
+                    fetch("/emulator/delete_connection/", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ source_device: sourceId, target_device: targetId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`Connection deleted successfully!`);
+                            edges.remove({ from: sourceId, to: targetId }); // Remove from Vis.js
+                            listItem.remove(); // Remove from UI list
+                        } else {
+                            alert(`Error: ${data.error}`);
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+                });
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    });
+
+        // Handle Position Saving after dragging the device
+        network.on("dragEnd", function (params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const newPosition = network.getPositions([nodeId])[nodeId];
+
+                // Send updated position to the backend
+                fetch("/emulator/update-position/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify({
+                        device_id: nodeId,
+                        x_position: newPosition.x,
+                        y_position: newPosition.y,
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);  // Log the server's response to debug
+                    if (data.status === 'success') {
+                        nodes.update({ id: nodeId, x: newPosition.x, y: newPosition.y });
+                    } else {
+                        alert("Failed to update position.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error updating position:", error);
+                    alert("There was an error while updating the position.");
+                });
+            }
+        });
+    }); 
+
+// instantiate device container 
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".start-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+            let deviceHostname = this.getAttribute("data-device-hostname");
+            let deviceId = this.getAttribute("data-device-id");
+            let logContainer = document.getElementById(`log-container-${deviceId}`);
+            let deviceName = document.getElementById(`device-name-${deviceId}`);
+            let deviceImage = document.getElementById(`device-image-${deviceId}`);
+            let stopButton = document.querySelector(`.stop-btn[data-device-id='${deviceId}']`);
+
+            // Ensure a log container exists for this device
+            if (!logContainer) {
+                logContainer = document.createElement("div");
+                logContainer.id = `log-container-${deviceId}`;
+                logContainer.classList.add("device-log");
+                document.getElementById("log-panel").appendChild(logContainer);
+            }
+
+            fetch("/emulator/start/", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `device_id=${deviceId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Device ${deviceHostname} is started!`);
+
+                    // Remove "No logs yet..." only once
+                    if (logContainer.innerHTML.includes("No logs yet...")) {
+                        logContainer.innerHTML = "";
+                    }
+
+                    // Update UI
+                    deviceName.style.color = "green";
+                    if (deviceImage) {
+                        console.log(`Changing image for ${deviceHostname} to switch_on.png`);
+                        deviceImage.src = "/static/device_emulator/images/switch_on.png";
+                    }
+                    stopButton.setAttribute("data-container-id", data.container_id);
+                    button.setAttribute("disabled", true);
+                    stopButton.removeAttribute("disabled");
+
+                    // Log queue for sequential message display
+                    let logQueue = [
+                        `✅ <b>Device ${deviceHostname} restarted successfully.</b>`,
+                        `⏳ Device ${deviceHostname} is initializing...`,
+                        `✅ Device ${deviceHostname} is ready!`,
+                        `<hr>`,
+                        `<b>Copy and paste the below syntax on your terminal:</b>`,
+                        `<code><i><b style="font-size:13px;">console ${deviceHostname}<b></i></code>`,
+                        `<hr>`
+                    ];
+
+                    function displayLogs(queue, index = 0) {
+                        if (index < queue.length) {
+                            setTimeout(() => {
+                                logContainer.innerHTML += `<p style="color: gray; font-size: 13px;">${queue[index]}</p>`;
+                                displayLogs(queue, index + 1);
+                            }, 1000);
+                        }
+                    }
+
+                    displayLogs(logQueue);
+                } else {
+                    logContainer.innerHTML += `<p style="color: red;">❌ Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+
+    document.querySelectorAll(".stop-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+            let deviceHostname = this.getAttribute("data-device-hostname");
+            let deviceId = this.getAttribute("data-device-id");
+            let logContainer = document.getElementById(`log-container-${deviceId}`);
+            let deviceName = document.getElementById(`device-name-${deviceId}`);
+            let deviceImage = document.getElementById(`device-image-${deviceId}`);
+            let startButton = document.querySelector(`.start-btn[data-device-id='${deviceId}']`);
+
+            if (!logContainer) {
+                logContainer = document.createElement("div");
+                logContainer.id = `log-container-${deviceId}`;
+                logContainer.classList.add("device-log");
+                document.getElementById("log-panel").appendChild(logContainer);
+            }
+
+            fetch("/emulator/stop/", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `device_id=${deviceId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Device ${deviceHostname} is stopping!`);
+
+                    // // Remove "No logs yet..." only once
+                    // if (logContainer.innerHTML.includes("No logs yet...")) {
+                    //     logContainer.innerHTML = "";
+                    // }
+
+                    // Update UI
+                    deviceName.style.color = "red";
+                    if (deviceImage) {
+                        console.log(`Changing image for ${deviceHostname} to switch_off.png`);
+                        deviceImage.src = "/static/device_emulator/images/switch_off.png";
+                    }
+                    button.setAttribute("disabled", true);
+                    startButton.removeAttribute("disabled");
+
+                    // Log queue for stopping sequence
+                    let stopLogQueue = [
+                        `🛑 Stopping device ${deviceHostname}...`,
+                        `⚠️ Terminating instance...`,
+                        `✅ Container for ${deviceHostname} stopped successfully.`,
+                        `<hr>`
+                    ];
+
+                    function displayLogs(queue, index = 0) {
+                        if (index < queue.length) {
+                            setTimeout(() => {
+                                logContainer.innerHTML += `<p style="color: red; font-size: 13px;">${queue[index]}</p>`;
+                                displayLogs(queue, index + 1);
+                            }, 1000);
+                        }
+                    }
+
+                    displayLogs(stopLogQueue);
+                } else {
+                    logContainer.innerHTML += `<p style="color: red;">❌ Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+});
+
+    // Function to update device status
+function updateDeviceStatus() {
+    console.log("updateDeviceStatus() function is called!");
+
+    fetch('/container-status/')
+        .then(response => response.json())
+        .then(containerStatuses => {
+            console.log("Fetched container statuses:", containerStatuses); // Debugging
+
+            Object.keys(containerStatuses).forEach(deviceHostname => {
+                let isRunning = containerStatuses[deviceHostname] === "running";
+                console.log(`Checking device: ${deviceHostname}, Running: ${isRunning}`); // Debugging
+
+                // Find the corresponding node in Vis.js
+                let matchingNodes = nodes.get({
+                    filter: function(item) {
+                        return item.label.trim() === deviceHostname.trim(); // Match hostname
+                    }
+                });
+
+                if (matchingNodes.length === 0) {
+                    console.error(`No matching node found for ${deviceHostname}`);
+                    return;
+                }
+
+                let node = matchingNodes[0];
+                console.log(`Updating node ID ${node.id} for ${deviceHostname}`); // Debugging
+
+                // Cache-busting image URL
+                let newImagePath = isRunning 
+                    ? `/static/device_emulator/images/switch_on.png?t=${new Date().getTime()}` 
+                    : `/static/device_emulator/images/switch_off.png?t=${new Date().getTime()}`;
+
+                // Check if update is necessary
+                if (node.image !== newImagePath) {
+                    nodes.update({ id: node.id, image: newImagePath });
+                    console.log(`Updated ${deviceHostname} image to ${newImagePath}`);
+                } else {
+                    console.log(`No change needed for ${deviceHostname}`);
+                }
+
+                // Update button states
+                let startButton = document.querySelector(`.start-btn[data-device-hostname='${deviceHostname}']`);
+                let stopButton = document.querySelector(`.stop-btn[data-device-hostname='${deviceHostname}']`);
+
+                if (startButton && stopButton) {
+                    if (isRunning) {
+                        startButton.setAttribute("disabled", true);
+                        stopButton.removeAttribute("disabled");
+                    } else {
+                        stopButton.setAttribute("disabled", true);
+                        startButton.removeAttribute("disabled");
+                    }
+                    console.log(`Updated buttons for ${deviceHostname}`);
+                } else {
+                    console.warn(`Buttons not found for ${deviceHostname}`);
+                }
+            });
+        })
+        .catch(error => console.error("Error fetching container status:", error));
+}
+
+// Run updateDeviceStatus every 5 seconds to keep status persistent
+setInterval(updateDeviceStatus, 5000);
+
+</script>
+
+{% endblock %}

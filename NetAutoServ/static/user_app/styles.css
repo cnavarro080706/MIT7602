@@ -1,0 +1,11 @@
+
+.django-form-field input,
+    .django-form-field textarea,
+    .django-form-field select {
+        border: none; /* Remove the default border */
+        box-shadow: none; /* Remove any shadow */
+        outline: none; /* Remove the focus outline */
+        padding: 0; /* Adjust padding if necessary */
+    }
+
+    

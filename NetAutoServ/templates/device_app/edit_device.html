@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Device{% endblock %}
+
+{% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show w-100" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <form method="POST" class="bg-white shadow rounded p-2" style="font-size:small; font-weight: bold;">
+            {% csrf_token %}
+            <div class="row">
+                <h3 class="text-center mb-2 fw-bold mt-5">Edit Device</h3>
+                <div class="col mt-5">
+                    <div class="mb-2">
+                        <label for="{{ form.hostname.id_for_label }}" class="form-label">Hostname</label>
+                        {{ form.hostname }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.lbcode.id_for_label }}" class="form-label">LB Code</label>
+                        {{ form.lbcode }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.loopback_ip.id_for_label }}" class="form-label">Loopback</label>
+                        {{ form.loopback_ip }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.routing.id_for_label }}" class="form-label">Routing</label>
+                        {{ form.routing }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.vendor.id_for_label }}" class="form-label">Vendor</label>
+                        {{ form.vendor }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.device_model.id_for_label }}" class="form-label">Device Model</label>
+                        {{ form.device_model }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.network_tier.id_for_label }}" class="form-label">Network Tier</label>
+                        {{ form.network_tier }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.role.id_for_label }}" class="form-label">Role</label>
+                        {{ form.role }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Save Changes</button>
+                    <a href="{% url 'device_list' %}" class="btn btn-secondary btn-sm mt-2">Cancel</a>  
+                </div>
+                <div class="col mt-5">
+                    <div class="mb-2">
+                        <label for="{{ form.bgp_as_leaf.id_for_label }}" class="form-label">Leaf ASN</label>
+                        {{ form.bgp_as_leaf }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.bgp_as_spine.id_for_label }}" class="form-label">Spine ASN</label>
+                        {{ form.bgp_as_spine }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.vlan_ip.id_for_label }}" class="form-label">InterSwitch</label>
+                        {{ form.vlan_ip }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.bgp_neighbor_spine1.id_for_label }}" class="form-label">Link to Spine1</label>
+                        {{ form.bgp_neighbor_spine1 }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.bgp_neighbor_spine2.id_for_label }}" class="form-label">Link to Spine2</label>
+                        {{ form.bgp_neighbor_spine2 }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.bgp_neighbor_spine3.id_for_label }}" class="form-label">Link to Spine3</label>
+                        {{ form.bgp_neighbor_spine3 }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.bgp_neighbor_spine4.id_for_label }}" class="form-label">Link to Spine4</label>
+                        {{ form.bgp_neighbor_spine4 }}
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ form.status }}
+                    </div>
+                </div> 
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
