@@ -1,0 +1,24 @@
+{% block header %}
+<style>
+    .email-container { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }
+    .header { color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .content { padding: 20px 0; }
+    .footer { color: #7f8c8d; font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="email-container">
+    <div class="header">
+        <h2>Password Reset Confirmation</h2>
+    </div>
+    <div class="content">
+        <p>Hello {{ username }},</p>
+        <p>Your password for {{ site_name }} has been successfully changed.</p>
+        <p>If you didn't request this change, please contact us immediately at {{ support_email }}.</p>
+    </div>
+    <div class="footer">
+        <p>Thank you,<br>The {{ site_name }} Team</p>
+    </div>
+</div>
+{% endblock %}

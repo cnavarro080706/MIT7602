@@ -5,8 +5,10 @@ class DeviceForm(forms.ModelForm):
     class Meta:
         model = Device
         fields = [
-            'hostname', 'loopback_ip','vlan_id','vlan_ip', 'vlan_subnet_mask','management_ip',
-            'management_default_gateway','routing','vendor','router_id','networks','bgp_as_leaf','bgp_as_spine', 'bgp_neighbor_leaf','bgp_neighbor_spine1','bgp_neighbor_spine2', 'bgp_neighbor_spine3', 'bgp_neighbor_spine4','networks','device_model','network_tier','lbcode','role','status'
+            'hostname', 'loopback_ip','vlan_id','vlan_ip', 'vlan_subnet_mask','management_ip','management_mac_add',
+            'management_default_gateway','vendor','router_id','bgp_as_leaf','bgp_as_spine', 
+            'bgp_neighbor_leaf','bgp_neighbor_spine1','bgp_neighbor_spine2', 'bgp_neighbor_spine3', 'bgp_neighbor_spine4',
+            'device_model','network_tier','lbcode','role','status','bgp_networks','ospf_networks','ibgp_asn', 'ospf_process_id',
         ]
         widgets = {
             'hostname': forms.TextInput(attrs={'class': 'form-control'}),
@@ -15,11 +17,12 @@ class DeviceForm(forms.ModelForm):
             'vlan_ip': forms.TextInput(attrs={'class': 'form-control'}),
             'vlan_subnet_mask': forms.NumberInput(attrs={'class': 'form-control'}),
             'management_ip': forms.TextInput(attrs={'class': 'form-control'}),
+            'management_mac_add': forms.TextInput(attrs={'class': 'form-control'}),
             'management_gw': forms.TextInput(attrs={'class': 'form-control'}),
-            'routing': forms.Select(attrs={'class': 'form-select'}),
             'router_id': forms.TextInput(attrs={'class': 'form-control'}),
             'vendor': forms.Select(attrs={'class': 'form-select'}),
-            'networks': forms.TextInput(attrs={'class': 'form-control'}),
+            'bgp_networks': forms.TextInput(attrs={'class': 'form-control'}),
+            'ospf_networks': forms.TextInput(attrs={'class': 'form-control'}),
             'bgp_as_leaf': forms.NumberInput(attrs={'class': 'form-control'}),
             'bgp_as_spine': forms.NumberInput(attrs={'class': 'form-control'}),
             'bgp_neighbor_leaf': forms.TextInput(attrs={'class': 'form-control'}),
@@ -31,7 +34,9 @@ class DeviceForm(forms.ModelForm):
             'network_tier': forms.Select(attrs={'class': 'form-select'}),
             'lbcode': forms.TextInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-select'}),
-            'status': forms.Select(attrs={'class': 'form-select'})
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'ibgp_asn': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ospf_process_id': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 class InterfaceForm(forms.ModelForm):

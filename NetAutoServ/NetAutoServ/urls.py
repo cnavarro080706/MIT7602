@@ -27,6 +27,7 @@ urlpatterns = [
     path('', include('naas_app.urls')),
     path('', include('emulator_app.urls')),
     path('', include('compliance_app.urls')),
+    path('', include('bug_tracker.urls')),
 
 ]
 urlpatterns+=static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)

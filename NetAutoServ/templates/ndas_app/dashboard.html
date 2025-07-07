@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}NDAS Dashboard{% endblock %}
-
 {% block content %}
 
 {% if messages %}
@@ -18,11 +17,25 @@
     <!-- Main Content -->
     <main class="col">
         <div class="d-flex justify-content-end flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <span class="text-primary">Welcome,</span><i><b class="text-primary">&nbsp;{{ user.username }}</b></i>
+            <div class="d-flex align-items-center">
+                <span class="text-primary">Welcome,</span>
+                <i><b class="text-primary">&nbsp;{{ user.username }}</b></i>
+                <!-- Clickable Profile Picture -->
+                <a href="{% url 'profile' %}" class="ms-2 text-decoration-none">
+                    <div class="position-relative">
+                        <img src="{{ user.profile.image.url }}" 
+                             alt="Profile Picture"
+                             class="rounded-circle border border-primary"
+                             style="width: 32px; height: 32px; object-fit: cover;">
+                        <span class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-white" 
+                              style="width: 10px; height: 10px;"></span>
+                    </div>
+                </a>
+            </div>
         </div>
-        <h1 class="mt-3">📊 Dashboard</h1>
+        <h1 class="mt-2 text-primary">📊 Dashboard</h1>
         <!-- Bootstrap Cards for Analytics -->
-        <div class="row mt-5">
+        <div class="row mt-2">
             <div class="col-md-2">
                 <div class="card text-white bg-primary mb-3">
                     <div class="card-body">
@@ -62,7 +75,7 @@
             <div class="col-md-2">
                 <div class="card text-white bg-secondary mb-3">
                     <div class="card-body">
-                        <h5 class="card-title">Simulated Devices </h5>
+                        <h5 class="card-title">Running Devices 🖥️</h5>
                         <p class="card-text display-5">{{ total_simulated_devices }}</p>
                     </div>
                 </div>
@@ -70,36 +83,107 @@
             <div class="col-md-2">
                 <div class="card text-white bg-secondary mb-3">
                     <div class="card-body">
-                        <h5 class="card-title">Tested Devices</h5>
+                        <h5 class="card-title">Tested Devices 🛠️ </h5>
                         <p class="card-text display-5">{{ total_tested_devices }}</p>
+                        <!-- <p>DEBUG: {{ total_tested_devices|default:"Not Passed" }}</p> -->
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row mt-5">
-            <div class="col-md-4"></div>
-                <!-- Chart for Activity Logs -->
+        <div class="row mt-2">
+            <div class="col-md-4">
+                <!-- Chart for User Activity Logs -->
                 <div class="card mt-4">
-                    <div class="card-body" style="height: 500px; width: 600px;">
-                        <h5 class="card-title">User Activity Over Time</h5>
+                    <!-- <div class="card-body" style="height: 300px; width: 400px;"> -->
+                        <h5 class="card-title text-center text-primary">User Activity Over Time</h5>
                         <canvas id="activityChart"></canvas>
-                    </div>
+                    <!-- </div> -->
+                </div>
+            </div>
+            <div class="col-md-4">
+                <!-- Chart for User Device Logs -->
+                <div class="card mt-4">
+                    <!-- <div class="card-body" style="height: 500px; width: 600px;"> -->
+                        <h5 class="card-title text-center text-primary">User Device Activity Logs</h5>
+                        <canvas id="devicesChart"></canvas>
+                    <!-- </div> -->
+                </div>
+            </div>
+            <div class="col-md-4">
+                <!-- Chart for User Time Spent -->
+                <div class="card mt-4">
+                    <!-- <div class="card-body" style="height: 500px; width: 600px;"> -->
+                        <h5 class="card-title text-center text-primary">User Time Spent</h5>
+                        <canvas id="timeChart"></canvas>
+                    <!-- </div> -->
                 </div>
             </div>
         </div> 
+        <!-- Device Testing Details Section -->
+        <div class="row mt-3">
+            <div class="col-md-7">
+                <h5 class="text-primary text-center mb-3">📋 Tested Devices Summary</h5>
+                <div class="table-responsive overflow-auto" style="max-height: 200px;">
+                    <table class="table table-hover align-middle table-sm text-center">
+                        <thead class="table-primary">
+                            <tr class="text-primary" style="font-size: smaller; color: blue;">
+                                <th>Device Name</th>
+                                <th>Total Times Tested</th>
+                                <th>Last Tested By</th>
+                                <th>Last Duration (mins)</th>
+                                <th>Last Tested At</th>
+                                <th>Device Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in tested_devices %}
+                                <tr class="table-sm text-primary" style="font-size: smaller; color: blue;">
+                                    <td>{{ device.device_name|default:"Unknown Device" }}</td>
+                                    <td>{{ device.total_tests|default:"0" }}</td>
+                                    <td>{{ device.last_tested_by|default:"N/A" }}</td>
+                                    <td>{{ device.last_duration|floatformat:2|default:"0.00" }}</td>
+                                    <td>{{ device.last_tested_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                                    <td>{{ device.device_status }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No tested device data found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="overflow: auto;" style="max-height: 250px;">
+                    <h5 class="card-title text-center text-primary">📦 Tested Devices: Count</h5>
+                    <canvas id="testedDevicesStackedChart"></canvas>
+                </div>
+            </div>
+        </div>
     </main>
 </div> 
-
+<!-- Global Page footer -->  
+<div class="footer fixed-bottom text-center text-muted" id="footer">
+    <hr>
+    <p class="ms-5"><small>app-version - 01.0315.2025 | Chris Navarro | NDAS&trade; | 2025 | 
+        <a href="#"><i class="bi bi-facebook text-primary"></i></a>
+        <a href="#"><i class="bi bi-messenger text-primary"></i></a>
+        <a href="https://www.linkedin.com/in/chris-navarro-42378572/"><i class="bi bi-linkedin text-primary"></i></a>
+        <a href="https://ndascommunity.slack.com"><i class="bi bi-slack text-primary"></i></a>
+    </small></p>
+</div>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
+        // Activity Chart - Line
         var ctx = document.getElementById('activityChart').getContext('2d');
         var activityChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: {{ activity_dates|safe }},  // Pass date labels from Django
+                labels: {{ activity_dates|safe }},
                 datasets: [{
                     label: 'User Activity',
-                    data: {{ activity_counts|safe }}, // Pass activity counts
+                    data: {{ activity_counts|safe }},
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 2,
                     fill: false
@@ -112,6 +196,169 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
         });
+    
+        // Function to generate a consistent color for a given username
+        const colorPalette = [
+            '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', 
+            '#59a14f', '#edc948', '#b07aa1', '#ff9da7'
+        ];
+
+        function getUsernameColor(username) {
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) {
+                hash = username.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colorPalette[Math.abs(hash) % colorPalette.length];
+        }
+    
+        // Devices Chart - Vertical Bar
+        var ctx1 = document.getElementById('devicesChart').getContext('2d');
+        var deviceUserLabels = [{% for data in device_counts %}"{{ data.logged_user__username|default:'Unknown' }}",{% endfor %}];
+        var deviceUserData = [{% for data in device_counts %}{{ data.total_devices|default:0 }},{% endfor %}];
+        var deviceBackgroundColors = deviceUserLabels.map(username => getUsernameColor(username));
+    
+        var devicesChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: deviceUserLabels,
+                datasets: [{
+                    label: 'Total Devices Tested',
+                    data: deviceUserData,
+                    backgroundColor: deviceBackgroundColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    
+        // Time Chart - Horizontal Stacked Bar with Percentages
+        var ctx2 = document.getElementById('timeChart').getContext('2d');
+        var userLabels = [{% for data in time_spent %}"{{ data.username|default:'devuser' }}",{% endfor %}];
+        var userData = [{% for data in time_spent %}{{ data.total_time|floatformat:2 }},{% endfor %}];
+    
+        var timeBackgroundColors = userLabels.map(username => getUsernameColor(username));
+    
+        // Calculate total time for percentage
+        var totalTime = userData.reduce((a, b) => a + b, 0);
+        var userPercentData = userData.map(value => ((value / totalTime) * 100).toFixed(2));
+    
+        var timeChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: userLabels,
+                datasets: [{
+                    label: 'Time Spent (%)',
+                    data: userPercentData,
+                    backgroundColor: timeBackgroundColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Switch to horizontal
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Percentage of Total Time Spent'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const percentage = context.parsed.x;
+                                const minutes = userData[index];
+                                return `${userLabels[index]}: ${minutes} mins (${percentage}%)`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Initialize DataTable for better sorting/filtering
+        $('#deviceTestingTable').DataTable({
+            order: [[1, 'desc']], // Sort by test count descending by default
+            responsive: true,
+            pageLength: 10,
+            dom: '<"top"f>rt<"bottom"lip><"clear">'
+        });
+
+        // Combined Stacked Bar Chart: Total Tests + Duration (in hours or days)
+        const ctxStacked = document.getElementById('testedDevicesStackedChart').getContext('2d');
+        new Chart(ctxStacked, {
+            type: 'bar',
+            data: {
+                labels: {{ tested_device_labels|safe }},
+                datasets: [
+                    {
+                        label: 'Total Tests',
+                        data: {{ tested_device_counts|safe }},
+                        backgroundColor: '#125656',  // deep green
+                        stack: 'combined'
+                    },
+                    // {
+                    //     label: 'Total Duration (hrs or days)',
+                    //     data: {{ tested_device_durations|safe }},
+                    //     backgroundColor: '#f28e2b',  // Orange
+                    //     stack: 'combined'
+                    // }
+                ]
+            },
+            options: {
+                indexAxis: 'y', // Horizontal bars
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label;
+                                const value = context.parsed.x;
+
+                                if (label === "Total Duration (hrs or days)") {
+                                    // Formatting duration (if it's over 24 hrs, show as days, otherwise hours)
+                                    return `${label}: ${value}`;
+                                } else {
+                                    return `${label}: ${value} tests`;
+                                }
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            // text: 'Combined Metrics'
+                        }
+                    },
+                    y: {
+                        stacked: true
+                    }
+                }
+            }
+        });
     });
-</script>
+    </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+<!-- {% load static %} -->
 
 {% block title %}Testing & Simulation{% endblock %}
 
@@ -51,8 +51,6 @@
                             <option selected>Select Interface</option>
                             <option value="Eth1">Ethernet1</option>
                             <option value="Eth2">Ethernet2</option>
-                            <option value="Eth3">Ethernet3</option>
-                            <option value="Eth4">Ethernet4</option>
                         </select>
                     </div>
 
@@ -71,8 +69,6 @@
                             <option selected>Select Interface</option>
                             <option value="Eth1">Ethernet1</option>
                             <option value="Eth2">Ethernet2</option>
-                            <option value="Eth3">Ethernet3</option>
-                            <option value="Eth4">Ethernet4</option>
                         </select>
                     </div>
 
@@ -102,6 +98,21 @@
 </div>
 
 <script>
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 document.addEventListener("DOMContentLoaded", function () {
     const container = document.getElementById('canvas');
     if (!container) {
@@ -351,7 +362,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             setTimeout(() => {
                                 logContainer.innerHTML += `<p style="color: gray; font-size: 13px;">${queue[index]}</p>`;
                                 displayLogs(queue, index + 1);
-                            }, 1000);
+                            }, 3000);
                         }
                     }
 
@@ -496,6 +507,92 @@ function updateDeviceStatus() {
 // Run updateDeviceStatus every 5 seconds to keep status persistent
 setInterval(updateDeviceStatus, 5000);
 
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedConnections = []; // Store device connections
+    const maxConnections = 1; // Max one connection (two devices)
+    
+    document.getElementById("connect-btn").addEventListener("click", function (event) {
+        event.preventDefault();
+        
+        const device1 = document.getElementById("device1").value;
+        const interface1 = document.getElementById("interface1").value;
+        const device2 = document.getElementById("device2").value;
+        const interface2 = document.getElementById("interface2").value;
+        
+        if (!device1 || !device2 || !interface1 || !interface2) {
+            alert("Please select both devices and interfaces.");
+            return;
+        }
+        
+        if (device1 === device2) {
+            alert("You cannot connect a device to itself.");
+            return;
+        }
+        
+        if (selectedConnections.length >= maxConnections) {
+            alert("Only one connection (two devices) is allowed.");
+            return;
+        }
+
+        fetch(`/check_device_status/${device1}/${device2}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "RUNNING") {
+                    alert("One or both devices are already running. Cannot create a connection.");
+                    return;
+                }
+                
+                // Draw connection line
+                drawConnection(device1, device2, interface1, interface2);
+                
+                selectedConnections.push({ device1, interface1, device2, interface2 });
+                
+                // Send to Django backend
+                fetch("/start_emulator/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken"),
+                    },
+                    body: JSON.stringify({ device1, interface1, device2, interface2 })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert("Error: " + data.error);
+                    } else {
+                        alert("Connection established successfully!");
+                    }
+                });
+            });
+    });
+
+    function drawConnection(device1, device2, interface1, interface2) {
+        const edge = {
+            from: device1,
+            to: device2,
+            label: `${interface1} ↔ ${interface2}`,
+            arrows: "to",
+            color: "#007bff"
+        };
+        network.body.data.edges.add(edge);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
 </script>
 
 {% endblock %}

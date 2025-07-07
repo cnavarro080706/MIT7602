@@ -6,6 +6,7 @@ from django.template import Context, Template
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from user_app.views import log_user_action
+import json
 
 @login_required
 def device_list(request):
@@ -18,34 +19,32 @@ def device_list(request):
 
 @login_required
 def add_device(request):
-    routing_protocols = ['Select a protocol', 'BGP', 'OSPF', 'EIGRP']
     interswitch_vlans = ['Select a vendor', 'arista']
     network_tiers = ['Select a tier', 'leaf', 'spine']
+    status = ['Select a status', 'active', 'inactive', 'under_deployment']
     vendors = ['Select a vendor', 'arista']
     device_models = ['Select a model', 'DCS-7280SR3-48YC8-R', 'DCS-7280SR3-48YC8-F', 'DCS-7280CR3-R', 'DCS-7280CR3-96-F']
-    
-    if request.method == 'POST':
-        print(request.POST)  # Debugging: Log the POST data
-        
-        # Prepare to collect and save multiple devices
-        devices = []
-        device_prefix = "hostname_"  # Look for device-related fields in POST data
 
-        # Loop through POST data to extract multiple device inputs
+    if request.method == 'POST':
+        devices = []
+        device_prefix = "hostname_"
+
         for key in request.POST:
             if key.startswith(device_prefix):
-                suffix = key.split("_")[1]  # Extract the device index (e.g., "1", "2")
+                suffix = key.split("_")[1]
+
                 device_data = {
                     "hostname": request.POST.get(f"hostname_{suffix}", f"device{suffix}"),
                     "loopback_ip": request.POST.get(f"loopback_ip_{suffix}", ""),
                     "management_ip": request.POST.get(f"management_ip_{suffix}", ""),
+                    "management_mac_add": request.POST.get(f"management_mac_add_{suffix}", ""), # mac_add format: 00:00:00:00:00:00
                     "management_default_gateway": request.POST.get(f"management_default_gateway_{suffix}", ""),
                     "vendor": request.POST.get(f"vendor_{suffix}", ""),
                     "vlan_id": request.POST.get(f"vlan_id_{suffix}", ""),
                     "vlan_ip": request.POST.get(f"vlan_ip_{suffix}", ""),
                     "vlan_subnet_mask": request.POST.get(f"vlan_subnet_mask_{suffix}", ""),
-                    "routing": request.POST.get(f"routing_{suffix}", ""),
                     "router_id": request.POST.get(f"router_id_{suffix}", ""),
+                    "ibgp_asn": request.POST.get(f"ibgp_asn_{suffix}", ""),
                     "bgp_as_leaf": request.POST.get(f"bgp_as_leaf_{suffix}", ""),
                     "bgp_as_spine": request.POST.get(f"bgp_as_spine_{suffix}", ""),
                     "bgp_neighbor_leaf": request.POST.get(f"bgp_neighbor_leaf_{suffix}", ""),
@@ -53,47 +52,72 @@ def add_device(request):
                     "bgp_neighbor_spine2": request.POST.get(f"bgp_neighbor_spine2_{suffix}", ""),
                     "bgp_neighbor_spine3": request.POST.get(f"bgp_neighbor_spine3_{suffix}", ""),
                     "bgp_neighbor_spine4": request.POST.get(f"bgp_neighbor_spine4_{suffix}", ""),
+                    "ospf_process_id": request.POST.get(f"ospf_process_id_{suffix}", ""),
                     "device_model": request.POST.get(f"device_model_{suffix}", ""),
                     "network_tier": request.POST.get(f"network_tier_{suffix}", ""),
                     "lbcode": request.POST.get(f"lbcode_{suffix}", ""),
+                    "status": request.POST.get(f"status_{suffix}", "under_deployment"),
                 }
+
+                # Validate status field
+                status_value = request.POST.get(f"status_{suffix}", "").strip().lower()
+                valid_statuses = {'active', 'under_deployment', 'decommissioned'}
+                if status_value not in valid_statuses:
+                    print(f"Invalid status '{status_value}' for device {device_data['hostname']}. Using default 'under_deployment'.")
+                    status_value = "under_deployment"
+                device_data["status"] = status_value
+
+                # Parse BGP and OSPF networks safely
+                bgp_networks_raw = request.POST.get(f"bgp_networks_{suffix}", "{}").strip()
+                ospf_networks_raw = request.POST.get(f"ospf_networks_{suffix}", "{}").strip()
+
+                try:
+                    device_data["bgp_networks"] = json.loads(bgp_networks_raw) if bgp_networks_raw else {}
+                except json.JSONDecodeError:
+                    print(f"Invalid JSON for BGP networks in {device_data['hostname']}, using empty dict.")
+                    device_data["bgp_networks"] = {}
+
+                try:
+                    device_data["ospf_networks"] = json.loads(ospf_networks_raw) if ospf_networks_raw else {}
+                except json.JSONDecodeError:
+                    print(f"Invalid JSON for OSPF networks in {device_data['hostname']}, using empty dict.")
+                    device_data["ospf_networks"] = {}
+
                 devices.append(device_data)
 
-        # Save each device to the database
+        # Save valid devices
         for device in devices:
-            form = DeviceForm(device)
+            form = DeviceForm(data=device)
             if form.is_valid():
-                device = form.save(commit=False)
-                device.logged_user = request.user
-                form.save()
+                print(form.cleaned_data)  # Debugging log
+                new_device = form.save(commit=False)
+                new_device.logged_user = request.user
+                new_device.save()
 
-                log_user_action(request.user, "Create", f"Created device {device.hostname}")  # Log the user action
-
-                messages.success(request, f"{device.hostname} added successfully!")
-                print(f"Device {device.hostname}saved successfully.")  # Log success
+                log_user_action(request.user, "Create", f"Created device {new_device.hostname}")
+                messages.success(request, f"Device {new_device.hostname} added successfully!")
+                print(f"Device {new_device.hostname} saved successfully.")  # Debugging log
             else:
-                # If one device fails, display an error and re-render the form
-                print(f"Form invalid for device {device['hostname']}: {form.errors}")
-                messages.error(request, f"Failed to add device {device.hostname}. Check the form for errors.")
+                print(f"Form invalid for device {device['hostname']}: Errors: {form.errors}")
+                messages.error(request, f"Failed to add device {device['hostname']}. Check the form for errors.")
+
+                # Render form with errors
                 context = {
                     'form': DeviceForm(),
-                    'routing_protocols': routing_protocols,
                     'interswitch_vlans': interswitch_vlans,
                     'network_tiers': network_tiers,
+                    'status': status,
                     'vendors': vendors,
                     'device_models': device_models,
                 }
                 return render(request, 'device_app/add_device.html', context)
 
-        # If all devices are added successfully
-        messages.success(request, f"{device.hostname} added successfully!")
-        return redirect('device_list')
+        return redirect('device_list')  # Redirect after successful addition
 
-    # Render the initial form for GET request
+    # Render form for GET request
     form = DeviceForm()
     context = {
         'form': form,
-        'routing_protocols': routing_protocols,
         'interswitch_vlans': interswitch_vlans,
         'network_tiers': network_tiers,
         'vendors': vendors,
@@ -117,6 +141,7 @@ def edit_device(request, device_id):
         form = DeviceForm(request.POST, instance=device)
 
         if form.is_valid():
+            print("Changed data:", form.changed_data) # Debugging log
             if form.has_changed():
                 # Save the updated device and show a success message
                 form.save()

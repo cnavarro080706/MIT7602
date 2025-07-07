@@ -4,7 +4,7 @@
 
 {% block content %}
 {% if messages %}
-    <div class="alert-container">
+    <div class="alert-container" role="alert">
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show w-100" role="alert">
                 {{ message }}
@@ -23,7 +23,7 @@
                         <div class="user-profile text-center">
                             <div class="user-avatar mb-3">
                                 <!-- Profile Image -->
-                                <img src="{{ user.profile.image.url }}" alt="Profile Picture" class="rounded-circle img-fluid" style="width: 150px; height: 150px;">
+                                <img src="{{ user.profile.image.url }}" alt="Profile Picture" class="rounded-circle img-fluid" style="width: 150px; height: 150px;" loading="lazy">
                             </div>
                             <h5 class="user-name">{{ user.first_name }} {{ user.last_name }}</h5>
                             <h6 class="user-email" style="font-size:small; font-weight: bold;">{{ user.email }}</h6>
@@ -80,13 +80,14 @@
                                 <div class="form-group mt-3 form-control-sm" style='font-size:12px;'>
                                     <label for="image" style="font-size:small; font-weight: bold;">Profile Picture</label>
                                     {{ profile_form.image }}
+                                    <small class="form-text text-muted">Upload JPG, PNG, or GIF (max 2MB).</small>
                                 </div>
                             </div>
                         </div>
                         <!-- Form Buttons -->
                         <div class="row gutters mt-3">
                             <div class="col-xl-12">
-                                <div class="text-right">
+                                <div class="text-end">
                                     <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">Cancel</a>
                                     <button type="submit" class="btn btn-primary btn-sm">Update</button>
                                 </div>

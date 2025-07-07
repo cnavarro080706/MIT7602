@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Bug Tracker{% endblock %}
+
+{% block content %}
+<h3>Bug List</h3>
+
+<ul>
+    {% for bug in bugs %}
+    <li>
+        <strong>{{ bug.bug_id }}</strong> - {{ bug.description }}
+        <a href="{% url 'add_comment' bug.bug_id %}">Add Comment</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

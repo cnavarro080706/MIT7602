@@ -3,14 +3,14 @@
 {% block title %}Log History{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-5">
+<div class="container-fluid mt-5 overflow-hidden">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card border-primary mb-3 shadow-lg">
                 <div class="card-header text-primary">User Logs</div>
                 <div class="card-body text-secondary">
                     <h6 class="card-title">User Activity Logs</h6>
-                    <div class="overflow-auto;">
+                    <div class="overflow-auto" style="max-height: 750px;">
                         <table class="table table-bordered" style="font-size:12px;">
                             <thead class="">
                                 <tr class="text-center">
@@ -42,13 +42,13 @@
         <!-- Display automation logs (only for admin) -->
         {% if log_entries %}
         <div class="col-md-6">
-            <div class="card border-primary mb-3 shadow-lg"">
+            <div class="card border-primary mb-3 shadow-lg">
                 <div class="card-header text-primary">History Logging</div>
                 <div class="card-body text-secondary">
                     <h6 class="card-title">Application Logs</h6>
                     <hr>
                     <!-- Right Column: Automation Log -->
-                    <div class="overflow-auto" style="height: 700px; font-size: 12px;">
+                    <div class="overflow-auto" style="max-height: 725px; font-size: 12px;">
                         {% for entry in log_entries %}
                             <p style="margin: 0; white-space: pre-wrap;">{{ entry }}</p>
                         {% empty %}
@@ -59,6 +59,16 @@
             </div>
         </div>
         {% endif %}
+    </div>
+    <!-- Global Page footer -->  
+    <div class="footer fixed-bottom text-center text-muted" id="footer">
+        <hr>
+        <p class="ms-5"><small>app-version - 01.0315.2025 | Chris Navarro | NDAS&trade; | 2025 | 
+            <a href="#"><i class="bi bi-facebook text-primary"></i></a>
+            <a href="#"><i class="bi bi-messenger text-primary"></i></a>
+            <a href="https://www.linkedin.com/in/chris-navarro-42378572/"><i class="bi bi-linkedin text-primary"></i></a>
+            <a href="https://ndascommunity.slack.com"><i class="bi bi-slack text-primary"></i></a>
+        </small></p>
     </div>
 </div>
 {% endblock %}

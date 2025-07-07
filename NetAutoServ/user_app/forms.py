@@ -8,12 +8,12 @@ class UserRegistrationForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name', 'username', 'email', 'password', 'password2']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control django-form-field'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control django-form-field'}),
-            'username': forms.TextInput(attrs={'class': 'form-control django-form-field'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control django-form-field'}),
-            'password': forms.PasswordInput(attrs={'class': 'form-control django-form-field'}),
-            'password2': forms.PasswordInput(attrs={'class': 'form-control django-form-field'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control django-form-field form-control-sm'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control django-form-field form-control-sm'}),
+            'username': forms.TextInput(attrs={'class': 'form-control django-form-field form-control-sm'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control django-form-field form-control-sm'}),
+            'password': forms.PasswordInput(attrs={'class': 'form-control django-form-field form-control-sm'}),
+            'password2': forms.PasswordInput(attrs={'class': 'form-control django-form-field form-control-sm'}),
         }
 
     password = forms.CharField(label='Password', widget=forms.PasswordInput)

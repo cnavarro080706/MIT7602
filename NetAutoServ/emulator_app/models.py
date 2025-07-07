@@ -36,11 +36,19 @@ class DevicePosition(models.Model):
         return self.device.hostname
     
 class EmulatorSession(models.Model):
+
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
     container_id = models.CharField(max_length=255, unique=True)
     status = models.CharField(max_length=20, choices=[("RUNNING", "RUNNING"), ("STOPPED", "STOPPED")])
     ssh_ip = models.GenericIPAddressField(null=True, blank=True)
     ssh_port = models.IntegerField(null=True, blank=True)
+    logged_user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    start_count = models.PositiveIntegerField(default=0)
+    last_started = models.DateTimeField(auto_now_add=True)
+    total_tested_devices = models.PositiveIntegerField(default=0)
+    start_time = models.DateTimeField(null=True, blank=True) 
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.FloatField(null=True, blank=True) 
 
     logged_user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     

@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <!-- Include jQuery from a CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.css">
     <!-- Vis.js CDN -->
     <link href="https://unpkg.com/vis-network/styles/vis-network.css" rel="stylesheet">
     <!-- Vanilla JS Datepicker CSS -->
@@ -58,7 +59,7 @@
             <ul class="sidebar-nav">
                 {% if request.user.is_authenticated %}
                 <li class="sidebar-item">
-                    <a href="{% url 'profile' %}" class="sidebar-link text-decoration-none">
+                    <a href="#" class="sidebar-link text-decoration-none">
                         <i class="bi bi-person-circle text-info" title="{{ user.username }}"></i>
                         <span class="text-info" style="font-size:medium;">{{ user.username }}&nbsp;<small style="font-size:10px;">🟢</small></span>
                     </a>
@@ -104,16 +105,22 @@
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="#" class="sidebar-link text-decoration-none">
+                    <a href="{% url 'profile' %}" class="sidebar-link text-decoration-none">
                         <i class="bi bi-gear text-light" title="Settings"></i>
                         <span>Settings</span>
                     </a>
                 </li>
+                <!-- <li class="sidebar-item">
+                    <a href="{% url 'bug_list' %}" class="sidebar-link text-decoration-none">
+                        <i class="bi bi-bug-fill text-info" title="submit a bug"></i>
+                        <span>Bug Tracker</span>
+                    </a>
+                </li> -->
             </ul>
             <hr class="text-info">
-            <div class="sidebar-footer mb-2 pb-2">
+            <div class="sidebar-footer mb-5 pb-2">
                 <a href="{% url 'logout' %}" class="sidebar-link text-decoration-none" onclick="return confirm('Do you want to leave the page?')">
-                    <i class="bi bi-box-arrow-left" title="logout"></i>
+                    <i class="bi bi-power text-lg" title="logout"></i>
                     <span>Logout</span>
                 </a>
             </div>
@@ -140,7 +147,6 @@
             <!-- Default content -->
             {% endblock %}
         
-       
         </div>
     </div>
 
@@ -181,6 +187,8 @@ document.addEventListener("DOMContentLoaded", function () {
     setInterval(updateLogBadge, 5000);  // Poll every 5 seconds
 });
 </script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.js"></script>
   </body>
     <!-- Bootstrap JS script -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>    

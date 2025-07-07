@@ -5,6 +5,8 @@ from .models import EmulatorSession, DeviceConnection, DevicePosition
 from .container_utils import start_container, stop_container, execute_cli, create_network, connect_network
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from user_app.models import UserActivityLog 
+from django.utils.timezone import now
 import json
 import subprocess
 import docker
@@ -33,87 +35,119 @@ def emulator_home(request):
 
 @csrf_exempt
 def start_emulator(request):
-    """Start a Docker container for the selected device."""
-    if request.method == "POST":
+    """Start a container for the selected device with user ownership tracking."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method."}, status=405)
+
+    try:
+        import urllib.parse
+
+        # Parse incoming data
+        if request.content_type == "application/x-www-form-urlencoded":
+            data = urllib.parse.parse_qs(request.body.decode())
+            device_id = data.get("device_id", [None])[0]
+        else:
+            device_id = request.POST.get("device_id")
+
+        logger.info(f"Starting emulator for device: {device_id}")
+
+        if not device_id:
+            logger.error("Missing device_id in request")
+            return JsonResponse({"success": False, "error": "Missing device_id."}, status=400)
+
+        # Validate device and permissions
         try:
-            import urllib.parse
+            device = Device.objects.get(id=device_id)
+            if not request.user.is_superuser and device.logged_user != request.user:
+                logger.warning(
+                    f"Permission denied for user {request.user} "
+                    f"on device {device_id} (owner: {device.logged_user})"
+                )
+                return JsonResponse({"success": False, "error": "Permission denied."}, status=403)
+        except Device.DoesNotExist:
+            logger.error(f"Device not found: {device_id}")
+            return JsonResponse({"success": False, "error": "Device not found."}, status=404)
 
-            # Explicitly parse URL-encoded form data
-            if request.content_type == "application/x-www-form-urlencoded":
-                data = urllib.parse.parse_qs(request.body.decode())
-                device_id = data.get("device_id", [None])[0]
-            else:
-                device_id = request.POST.get("device_id")
+        # Get or create session with user ownership
+        session, created = EmulatorSession.objects.get_or_create(
+            device=device,
+            defaults={
+                'logged_user': request.user,
+                'start_time': now(),
+                'status': 'STOPPED',
+                'start_count': 0
+            }
+        )
 
-            logger.info(f"Extracted Device ID: {device_id}")
+        # Update ownership if session existed
+        if not created and session.logged_user != request.user:
+            logger.info(
+                f"Updating session ownership from {session.logged_user} "
+                f"to {request.user} for device {device_id}"
+            )
+            session.logged_user = request.user
 
-            if not device_id:
-                logger.error("ERROR: Missing device_id.")
-                return JsonResponse({"success": False, "error": "Missing device_id."}, status=400)
+        # Update session metrics
+        session.start_count += 1
+        session.start_time = now() if created else session.start_time
+        session.save()
 
-            # Check if the device exists
-            try:
-                device = get_object_or_404(Device, id=device_id)
-                if not request.user.is_superuser and device.logged_user != request.user:
-                    return JsonResponse({"success": False, "error": "Permission denied."}, status=403)
-                
-                device = Device.objects.get(id=device_id)
-                logger.info(f"Device found: {device.hostname}")
-            except Device.DoesNotExist:
-                logger.error(f"ERROR: Device with ID {device_id} not found.")
-                return JsonResponse({"success": False, "error": "Device not found."}, status=404)
+        # Handle already running sessions
+        if session.status == "RUNNING":
+            logger.warning(f"Device {device_id} already running - restarting...")
+            stop_container(session.container_id)
+            session.status = "STOPPED"
+            session.save()
 
-            # Check if session already exists
-            session, created = EmulatorSession.objects.get_or_create(device=device)
-            if session.status == "RUNNING":
-                logger.warning(f"WARNING: Device {device.hostname} is already running. Stopping existing container...")
-                stop_container(session.container_id)  # Stop existing container
-                session.status = "STOPPED"
-                session.save()
+        # Prepare Docker environment
+        logger.info("Setting up networks...")
+        create_network("net1")
+        create_network("net2")
 
-            # Ensure networks exist
-            logger.info("Ensuring networks exist...")
-            create_network("net1")
-            create_network("net2")
+        # Start container
+        container_id = start_container(device.id, device.hostname)
+        if not container_id:
+            logger.error("Container startup failed")
+            return JsonResponse({"success": False, "error": "Failed to start container."}, status=500)
 
-            # Start the container
-            logger.info(f"Starting container for device {device.hostname}...")
-            container_id = start_container(device.id, device.hostname)
+        # Update session with container info
+        session.container_id = container_id
+        session.status = "RUNNING"
+        session.total_tested_devices += 1
+        session.save()
 
-            if container_id:
-                logger.info(f"Successfully started container: {container_id}")
-                connect_network("net1", container_id)
-                connect_network("net2", container_id)
-                session.container_id = container_id
-                session.status = "RUNNING"
-                session.save()
+        # Connect networks
+        connect_network("net1", container_id)
+        connect_network("net2", container_id)
 
-                return JsonResponse({
-                    "success": True,
-                    "message": f"Device {device.hostname} restarted successfully.",
-                    "container_id": container_id
-                })
+        # Log activity
+        UserActivityLog.objects.create(
+            user=request.user,
+            action="Started Testing",
+            description=f"Started testing device {device.hostname} (Container: {container_id})",
+            device=device,
+            timestamp=now()
+        )
 
-            logger.error("ERROR: Failed to start emulator.")
-            return JsonResponse({"success": False, "error": "Failed to start emulator."}, status=500)
+        logger.info(f"Successfully started container {container_id} for device {device_id}")
+        return JsonResponse({
+            "success": True,
+            "message": f"Device {device.hostname} started successfully.",
+            "container_id": container_id
+        })
 
-        except json.JSONDecodeError:
-            logger.error("ERROR: Invalid JSON format in request.")
-            return JsonResponse({"error": "Invalid JSON format."}, status=400)
-        except Exception as e:
-            logger.error(f"ERROR: Unexpected exception: {str(e)}")
-            return JsonResponse({"success": False, "error": f"Unexpected error: {str(e)}"}, status=500)
-
-    return JsonResponse({"error": "Invalid request method."}, status=405)
-
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON in request")
+        return JsonResponse({"error": "Invalid JSON format."}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        return JsonResponse({"success": False, "error": f"Unexpected error: {str(e)}"}, status=500)
 
 @csrf_exempt
 def stop_emulator(request):
     """Stop a running Docker container."""
     if request.method == "POST":
         try:
-            import json
-
             # Handle JSON and form-urlencoded requests properly
             if request.content_type == "application/json":
                 data = json.loads(request.body)
@@ -137,7 +171,27 @@ def stop_emulator(request):
 
             if stop_container(session.container_id):  # Call the stop function
                 session.status = "STOPPED"
+                session.end_time = now()
+
+                if session.start_time:  # Ensure start_time is not None
+                    session.duration = (session.end_time - session.start_time).total_seconds()
+                else:
+                    logger.warning(f"Session for device {device.hostname} has no start_time recorded.")
+                    session.duration = None
+                    
+                # Ensure logged_user is correctly set if missing
+                if not session.logged_user:
+                    session.logged_user = request.user
+
                 session.save()
+
+                UserActivityLog.objects.create(
+                    user=request.user,
+                    action="Stopped Testing",
+                    description=f"Stopped testing device {device.hostname}",
+                    device=device,
+                    timestamp=now(),
+                )
                 return JsonResponse({"success": True, "message": "Container stopped successfully."})
 
             return JsonResponse({"success": False, "error": "Failed to stop container."}, status=500)
@@ -157,17 +211,13 @@ def device_status(request):
 def get_container_status(request):
     try:
         running_containers = {container.name: "running" for container in client.containers.list()}
-        all_containers = {container.name: "stopped" for container in client.containers.list(all=True)}
-        # Merge both, prioritizing running containers
-        all_containers.update(running_containers)
-        logger.info(f"Container Status: {all_containers}")  # Log output to console
-        response_data = JsonResponse(all_containers, safe=False)
-        logger.info(f"Response Size: {len(response_data.content)} bytes")
-        return response_data
+        stopped_containers = {container.name: "stopped" for container in client.containers.list(all=True, filters={"status": "exited"})}
+        all_containers = {**stopped_containers, **running_containers}
+        return JsonResponse(all_containers, safe=False)
     except Exception as e:
         logger.error(f"Error fetching container status: {e}")
         return JsonResponse({"error": str(e)}, status=500)
-   
+      
 def get_container_logs(request):
     logs = []
     try:
@@ -325,8 +375,8 @@ def connect_devices(request):
                 client.networks.create(name=network_name, driver="bridge")
                 logger.info(f"Created network {network_name}")
 
-            container1_name = f"ceos_{device1_id}"
-            container2_name = f"ceos_{device2_id}"
+            container1_name = device1_id
+            container2_name = device2_id
 
             # Connect devices safely (avoid duplicates)
             connect_network(network_name, container1_name)

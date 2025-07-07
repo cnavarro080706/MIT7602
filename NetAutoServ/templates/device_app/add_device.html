@@ -17,188 +17,217 @@
 <div class="container-fluid mt-5">
   <div class="d-flex justify-content-center">
     <div class="card" style="width: 82rem;">
-      <div class="card-header text-primary">
+      <div class="card-header text-primary d-flex justify-content-between">
         <h3 class="">New Device</h3>
+        <button type="button" id="mock-data-btn" class="btn btn-info btn-sm mt-2 mb-2 ms-4">Sample Data</button>
       </div>
       <form method="POST" action="{% url 'add_device' %}" class="bg-white shadow rounded p-2" style="font-size:small; font-weight: bold;">
         {% csrf_token %}
         <div class="card-body">
           <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <!-- Device Information Section -->
-                <div class="accordion accordion-flush" id="device-forms-container">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne" style="background-color: blanchedalmond;">
-                        Device Information
-                      </button>
-                    </h2>
-                    <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#device-forms-container">
-                      <div class="accordion-body">
-                        <h5>Device 1</h5>
-                        <div class="row g-3">
-                          <div class="col">
-                            <input type="text" class="form-control" placeholder="Hostname" name="hostname_1">
-                          </div>
-                          <div class="col">
-                            <input type="text" class="form-control" placeholder="Loopback IP" name="loopback_ip_1">
-                          </div>
-                          <div class="col">
-                            <input type="text" class="form-control" placeholder="Management IP" name="management_ip_1">
-                          </div>
-                          <div class="col">
-                            <input type="text" class="form-control" placeholder="Management GW" name="management_default_gateway_1">
-                          </div>
+            <li class="list-group-item">
+              <!-- Device Information Section -->
+              <div class="accordion accordion-flush" id="device-forms-container">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne" style="background-color: blanchedalmond;">
+                      Device Information
+                    </button>
+                  </h2>
+                  <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#device-forms-container">
+                    <div class="accordion-body">
+                      <h5>Device 1</h5>
+                      <div class="row g-3 mt-2">
+                        <div class="col">
+                          <label for="hostname_1">Hostname</label>
+                          <input type="text" class="form-control" placeholder="Hostname" name="hostname_1">
                         </div>
-                        <div class="row g-2 mt-2">
-                          <div class="col col-md-3">
-                            <select class="form-select" name="vendor_1" id="interswitch_vlan">
-                              {% for vendor in interswitch_vlans %}
+                        <div class="col">
+                          <label for="loopback_ip_1">Loopback0</label>
+                          <input type="text" class="form-control" placeholder="Loopback IP" name="loopback_ip_1">
+                        </div>
+                        <div class="col col-md-3">
+                          <label for="vendor_1">Vendor</label>
+                          <select class="form-select" name="vendor_1" id="interswitch_vlan">
+                          {% for vendor in interswitch_vlans %}
+                            <option value="{{ vendor }}">{{ vendor }}</option>
+                          {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col col-md" id="arista" style="display: none;">
+                          <label for="vlan_id_1">VLAN ID</label>
+                          <input type="text" id="vlan_id" name="vlan_id_1" placeholder="INTER_SW VLAN (e.i. VLAN1 - 4094 )" class="form-control">
+                        </div>
+                        <div class="col col">
+                          <label for="vlan_ip_1">SVI VLAN</label>
+                          <input type="text" id="vlan_ip" name="vlan_ip_1" placeholder="INTER_SW(e.i. 192.168.0.0)" class="form-control">
+                        </div>
+                        <div class="col col">
+                          <label for="vlan_subnet_mask_1">VLAN MASK</label>
+                          <input type="text" id="vlan_mask" name="vlan_subnet_mask_1" placeholder="VLAN MASK (e.i. 32,31,30...24)" class="form-control">
+                        </div>
+                      </div>
+                      <div class="row g-2 mt-2">
+                        <div class="col">
+                          <label for="management_ip_1">MGMT IP</label>
+                          <input type="text" class="form-control" placeholder="Management IP" name="management_ip_1">
+                        </div>
+                        <div class="col">
+                          <label for="management_mac_add_1">MGMT MAC</label>
+                          <input type="text" class="form-control" placeholder="MAC Address 00:00:00:00:00:00" name="management_mac_add_1">
+                        </div>
+                        <div class="col">
+                          <label for="management_default_gateway_1">MGMT GW</label>
+                          <input type="text" class="form-control" placeholder="Management GW" name="management_default_gateway_1">
+                        </div>
+                      </div>
+                      <!-- Delete Button -->
+                      <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button>
+                      </div>
+                    </div>
+                </div>
+              </div>
+              <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
+            </li>            
+            <li class="list-group-item">
+              <!-- Device Details Section -->
+              <div class="accordion accordion-flush" id="device_details">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo" style="background-color: blanchedalmond;">
+                      Device Details
+                    </button>
+                  </h2>
+                  <div id="flush-collapseTwo" class="accordion-collapse collapse" data-bs-parent="#device_details">
+                    <div class="accordion-body">
+                      <h5>Device 1</h5>
+                      <div class="row g-3 mt-2">
+                        <div class="col col-md-3">
+                          <label for="device_model_1">Platform Model</label>
+                            <select class="form-select" name="device_model_1" id="device_model">
+                              {% for device_model in device_models %}
+                                <option value="{{ device_model }}">{{ device_model }}</option>
+                              {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col col-md-3">
+                          <label for="vendor_1">Vendor</label>
+                            <select class="form-select" name="vendor_1" id="vendor">
+                              {% for vendor in vendors %}
                                 <option value="{{ vendor }}">{{ vendor }}</option>
                               {% endfor %}
                             </select>
-                          </div>
-                          <div class="col col-md" id="arista" style="display: none;">
-                            <input type="text" id="vlan_id" name="vlan_id_1" placeholder="INTER_SW VLAN (e.i. VLAN1 - 4094 )" class="form-control">
-                          </div>
-                          <div class="col col">
-                            <input type="text" id="vlan_ip" name="vlan_ip_1" placeholder="INTER_SW P2P (e.i. 192.168.0.0)" class="form-control">
-                          </div>
-                          <div class="col col">
-                            <input type="text" id="vlan_mask" name="vlan_subnet_mask_1" placeholder="VLAN MASK (e.i. 32,31,30...24)" class="form-control">
-                          </div>
                         </div>
-                        <!-- Delete Button -->
-                        <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
-              </li>
-              
-              <li class="list-group-item">
-                <!-- Device Details Section -->
-                <div class="accordion accordion-flush" id="device_details">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo" style="background-color: blanchedalmond;">
-                        Device Details
-                      </button>
-                    </h2>
-                    <div id="flush-collapseTwo" class="accordion-collapse collapse" data-bs-parent="#device_details">
-                      <div class="accordion-body">
-                        <h5>Device 1</h5>
-                        <div class="row g-3">
-                          <div class="col col-md-3">
-                              <select class="form-select" name="device_model_1" id="device_model">
-                                {% for device_model in device_models %}
-                                  <option value="{{ device_model }}">{{ device_model }}</option>
-                                {% endfor %}
-                              </select>
-                          </div>
-                          <div class="col col-md-3">
-                              <select class="form-select" name="vendor_1" id="vendor">
-                                {% for vendor in vendors %}
-                                  <option value="{{ vendor }}">{{ vendor }}</option>
-                                {% endfor %}
-                              </select>
-                          </div>
-                          <div class="col col-md-3">
-                              <select class="form-select" name="network_tier_1" id="network_tier">
-                                {% for network_tier in network_tiers %}
-                                  <option value="{{ network_tier }}">{{ network_tier }}</option>
-                                {% endfor %}
-                              </select>
-                          </div>
-                          <div class="col col-md-3">
-                            <input type="text" class="form-control" placeholder="LB Code" name="lbcode_1">
-                          </div>  
-                        </div>
-                        <!-- Delete Button -->
-                        <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button> 
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
-              </li>
-              <li class="list-group-item">
-                <!-- Routing Configurations Section -->
-                <div class="accordion accordion-flush" id="routing">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree" style="background-color: blanchedalmond;">
-                        Routing Configurations
-                      </button>
-                    </h2>
-                    <div id="flush-collapseThree" class="accordion-collapse collapse" data-bs-parent="#routing">
-                      <div class="accordion-body">
-                        <h5>Device 1</h5>
-                        <div class="row g-3">
-                          <div class="col col-md-3">
-                            <select class="form-select" name="routing_1" id="routing_protocol">
-                              {% for protocol in routing_protocols %}
-                                <option value="{{ protocol }}">{{ protocol }}</option>
+                        <div class="col col-md-3">
+                          <label for="network_tier_1">Network Tier</label>
+                            <select class="form-select" name="network_tier_1" id="network_tier">
+                              {% for network_tier in network_tiers %}
+                                <option value="{{ network_tier }}">{{ network_tier }}</option>
                               {% endfor %}
                             </select>
-                          </div>
-                          <!--Routing Protocols-->
-                          <div class="col col-md-2" id="bgp_config" style="display: none;">
+                        </div>
+                        <div class="col col-md-3">
+                          <label for="lbcode_1">LB Code</label>
+                          <input type="text" class="form-control" placeholder="LB Code" name="lbcode_1">
+                        </div>  
+                      </div>
+                      <!-- Delete Button -->
+                      <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button> 
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
+            </li>
+            <li class="list-group-item">
+              <!-- Routing Configurations Section -->
+              <div class="accordion accordion-flush" id="routing">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree" style="background-color: blanchedalmond;">
+                      Routing Configurations
+                    </button>
+                  </h2>
+                  <div id="flush-collapseThree" class="accordion-collapse collapse" data-bs-parent="#routing">
+                    <div class="accordion-body">
+                      <h5>Device 1</h5>
+                      <!-- BGP Section -->
+                      <div class="bgp-section">
+                        <h6 class="mt-3">BGP (External/Upstream Routes)</h6>
+                        <div class="row g-3 mt-2">
+                          <div class="col col-md-2">
+                            <label for="bgp_as_leaf_1">SW AS</label>
                             <input type="text" id="bgp_as_leaf" name="bgp_as_leaf_1" placeholder="BGP ASN" class="form-control">
                           </div>
-                          <div class="col col-md-2" id="ospf_config" style="display: none;">
-                            <input type="text" id="ospf_process_id" name="ospf_process_id_1" placeholder="OSPF Process ID" class="form-control">
-                          </div>
-                          <div class="col col-md-2" id="eigrp_config" style="display: none;">
-                            <input type="text" id="eigrp_as" name="eigrp_as_1" placeholder="EIGRP AS" class="form-control">
-                          </div>
-
-                          <!--Router-id-->
-                          <div class="col col-md-3" id="router_id">
+                          <div class="col col-md-3">
+                            <label for="router_id_1">Router ID</label>
                             <input type="text" id="router_id_field" name="router_id_1" placeholder="Router ID (loopback ip)" class="form-control">
                           </div>
-                          <!--Prefixes to be advertised-->
-                          <div class="col col-md-4" id="subnet">
-                            <input type="text" id="subnet" name="networks_1" placeholder='{"network1": "192.168.1.0/24", "network2": "10.0.0.0/8"}' class="form-control">
+                          <div class="col col-md-6">
+                            <label for="bgp_networks_1">Networks</label>
+                            <input type="text" id="subnet" name="bgp_networks_1" placeholder='{"network1": "192.168.1.0/24", "network2": "10.0.0.0/8"}' class="form-control">
                           </div>
                         </div>
-                        <!--iBGP-->
+                        <!-- iBGP -->
                         <div class="row g-3 mt-2">
-                            <div class="col col-md-2" id="ibgp_asn" style="display: none;">
-                                <input type="text" id="ibgp_asn" name="ibgp_asn_1" placeholder="iBGP neighbor ASN" class="form-control">
-                              </div>
-                          <div class="col col-md-3" id="bgp_neighbor_leaf" style="display: none;">
+                          <div class="col col-md-2">
+                            <label for="ibgp_asn_1">Neighbor AS</label>
+                            <input type="text" id="ibgp_asn" name="ibgp_asn_1" placeholder="iBGP neighbor ASN" class="form-control">
+                          </div>
+                          <div class="col col-md-3">
+                            <label for="bgp_neighbor_leaf_1">iBGP Neighbor</label>
                             <input type="text" id="bgp_neighbor_leaf" name="bgp_neighbor_leaf_1" placeholder="iBGP neighbor loopback" class="form-control">
                           </div>
                         </div>
-                        <!--eBGP-->
+                        <!-- eBGP -->
                         <div class="row g-3 mt-2">
-                            <div class="col col-md-2" id="ebgp_asn" style="display: none;">
-                                <input type="text" id="bgp_as_spine" name="bgp_as_spine_1" placeholder="eBGP neighbor ASN" class="form-control">
-                            </div>
-                            <div class="col col-md-2" id="bgp_neighbor_spine1" style="display: none;">
+                          <div class="col col-md-2">
+                            <label for="bgp_as_spine_1">eBGP Spine AS</label>
+                            <input type="text" id="bgp_as_spine" name="bgp_as_spine_1" placeholder="eBGP neighbor ASN" class="form-control">
+                          </div>
+                          <div class="col col-md-2">
+                            <label for="bgp_neighbor_spine1_1">eBGP Spine1</label>
                             <input type="text" id="bgp_neighbor_spine1" name="bgp_neighbor_spine1_1" placeholder="Spine1 ip address" class="form-control">
-                            </div>
-                            <div class="col col-md-2" id="bgp_neighbor_spine2" style="display: none;">
+                          </div>
+                          <div class="col col-md-2">
+                            <label for="bgp_neighbor_spine2_1">eBGP Spine2</label>
                             <input type="text" id="bgp_neighbor_spine2" name="bgp_neighbor_spine2_1" placeholder="Spine2 ip address" class="form-control">
-                            </div>
-                            <div class="col col-md-2" id="bgp_neighbor_spine3" style="display: none;">
-                                <input type="text" id="bgp_neighbor_spine3" name="bgp_neighbor_spine3_1" placeholder="Spine3 ip address" class="form-control">
-                            </div>
-                            <div class="col col-md-2" id="bgp_neighbor_spine4" style="display: none;">
-                                <input type="text" id="bgp_neighbor_spine4" name="bgp_neighbor_spine4_1" placeholder="Spine4 ip address" class="form-control">
-                            </div>    
+                          </div>
+                          <div class="col col-md-2">
+                            <label for="bgp_neighbor_spine3_1">eBGP Spine3</label>
+                            <input type="text" id="bgp_neighbor_spine3" name="bgp_neighbor_spine3_1" placeholder="Spine3 ip address" class="form-control">
+                          </div>
+                          <div class="col col-md-2">
+                            <label for="bgp_neighbor_spine4_1">eBGP Spine4</label>
+                            <input type="text" id="bgp_neighbor_spine4" name="bgp_neighbor_spine4_1" placeholder="Spine4 ip address" class="form-control">
+                          </div>
                         </div>
-                        <!-- Delete Button -->
-                        <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button> 
                       </div>
+
+                      <!-- IGP Section -->
+                      <div class="igp-section mt-4">
+                        <h6>IGP (Internal Routes)</h6>
+                        <div class="row g-3 mt-2">
+                          <!-- OSPF -->
+                          <div class="col col-md-2 mb-2">
+                            <label for="ospf_process_id_1">OSPF Process ID</label>
+                            <input type="text" id="ospf_process_id" name="ospf_process_id_1" placeholder="OSPF Process ID" class="form-control">
+                          </div>
+                          <div class="col col-md-6">
+                            <label for="ospf_networks_1">Networks</label>
+                            <input type="text" id="ospf_subnet" name="ospf_networks_1" placeholder='{"network1": "192.168.1.0/24", "network2": "10.0.0.0/8"}' class="form-control">
+                          </div>
+                        </div>
+                       
+                      </div>
+                      <!-- Delete Button -->
+                      <button type="button" class="btn mt-2 delete-device-btn"><i class="bi bi-trash" title="delete item"></i></button>
                     </div>
                   </div>
                 </div>
-                <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
-              </li>
-            </div>
+              </div>
+              <button type="button" id="add-device-btn" class="btn mt-2"><i class="bi bi-plus-lg" title="add_device"></i></button>
+            </li>
           </ul>
           <button type="submit" class="btn btn-primary btn-sm mt-2 mb-2 ms-4">Submit</button>
           <a href="{% url 'device_list'%}" class="btn btn-secondary btn-sm"> Cancel </a>
@@ -413,5 +442,54 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+  const mockDataBtn = document.getElementById('mock-data-btn');
+
+  if (mockDataBtn) {
+    mockDataBtn.addEventListener('click', () => {
+      // Mock data for Device Information
+      document.querySelector('input[name="hostname_1"]').value = 'rph00-lea00-ar7280';
+      document.querySelector('input[name="loopback_ip_1"]').value = '10.0.0.1';
+      document.querySelector('input[name="management_ip_1"]').value = '192.168.0.225';
+      document.querySelector('input[name="management_mac_add_1"]').value = '50:00:00:01:00:00';
+      document.querySelector('input[name="management_default_gateway_1"]').value = '192.168.0.1';
+      document.getElementById('interswitch_vlan').value = 'arista';
+      document.querySelector('input[name="vlan_id_1"]').value = '4001';
+      document.querySelector('input[name="vlan_ip_1"]').value = '172.16.100.1';
+      document.querySelector('input[name="vlan_subnet_mask_1"]').value = '31';
+
+      // Mock data for Device Details
+      document.querySelector('select[name="device_model_1"]').value = 'DCS-7280SR3-48YC8-R';
+      document.getElementById('vendor').value = 'arista';
+      document.querySelector('select[name="network_tier_1"]').value = 'leaf';
+      document.querySelector('input[name="lbcode_1"]').value = 'ph00';
+
+      // Mock data for BGP (External/Upstream Routes)
+      document.querySelector('input[name="bgp_as_leaf_1"]').value = '65000';
+      document.querySelector('input[name="router_id_1"]').value = '10.0.0.1';
+      document.querySelector('input[name="bgp_networks_1"]').value = '{"network1": "192.168.254.0/24", "network2": "10.0.0.0/8", "network3": "172.16.100.0/24"}';
+      document.querySelector('input[name="ibgp_asn_1"]').value = '65001';
+      document.querySelector('input[name="bgp_neighbor_leaf_1"]').value = '10.0.0.2';
+      document.querySelector('input[name="bgp_as_spine_1"]').value = '64512';
+      document.querySelector('input[name="bgp_neighbor_spine1_1"]').value = '10.0.1.1';
+      document.querySelector('input[name="bgp_neighbor_spine2_1"]').value = '10.0.2.1';
+      document.querySelector('input[name="bgp_neighbor_spine3_1"]').value = '10.0.3.1';
+      document.querySelector('input[name="bgp_neighbor_spine4_1"]').value = '10.0.4.1';
+
+      // Mock data for IGP (Internal Routes)
+      document.querySelector('input[name="ospf_process_id_1"]').value = '65001';
+      document.querySelector('input[name="ospf_networks_1"]').value = '{"network1": "192.168.254.0/24", "network2": "10.0.0.0/8", "network3": "172.16.100.0/24"}';
+
+      // Ensure elements exist before dispatching events
+      const vendorSelect = document.querySelector('select[name="vendor_1"]');
+      if (vendorSelect) vendorSelect.dispatchEvent(new Event('change'));
+
+      // Delay alert message to ensure UI updates first
+      setTimeout(() => {
+        alert('Sample data has been loaded!');
+      }, 200);
+    });
+  }
+});
 </script>
 {% endblock %}

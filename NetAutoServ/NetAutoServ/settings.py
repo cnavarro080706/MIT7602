@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'naas_app',
     'emulator_app',
     'compliance_app',
+    'bug_tracker',
     'django_extensions',
 ]
 
@@ -80,17 +81,17 @@ WSGI_APPLICATION = 'NetAutoServ.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/4.2/ref/settings/#databasescls
 
 load_dotenv()  # take environment variables from .env file
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("NAME"),
-        "USER": os.getenv("USER"),
-        "PASSWORD": os.getenv("PASSWORD"),
-        "HOST": os.getenv("HOST"),
-        "PORT": os.getenv("PORT"),
+        "NAME": os.getenv("MYSQL_DB"),
+        "USER": os.getenv("MYSQL_USER"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD"),
+        "HOST": os.getenv("MYSQL_HOST"),
+        "PORT": os.getenv("MYSQL_PORT"),
     }
 }
 
@@ -144,3 +145,29 @@ REDIRECT_URL = '/dashboard/'
 LOGIN_URL = '/login/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+# For all other emails (or use the same account)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "ndas.user.reset.pw@gmail.com" 
+EMAIL_HOST_PASSWORD = "eysxrlvacwsfolkl"
+DEFAULT_FROM_EMAIL = "NDAS Email Confirmation <ndas.user.reset.pw@gmail.com>"
+
+SITE_NAME = "NDAS"
+SUPPORT_EMAIL = "ndas.sme@gmail.com"
+
+# Additional email credentials for password reset
+EMAIL_PW_RESET_USER = "ndas.user.reset.pw@gmail.com"
+EMAIL_PW_RESET_PASS = "eysxrlvacwsfolkl"
+
+SME_EMAILS = ["herpidz06@gmail.com", "ejnavarro06@gmail.com"]
+
+# DHCP Server Configuration
+DHCP_SERVER = os.getenv("DHCP_SERVER")                  # my remote Ubuntu DHCP server
+DHCP_SSH_USER = os.getenv("DHCP_SSH_USER")              # SSH user with sudo privileges
+DHCP_SSH_KEY_PATH = os.getenv("DHCP_SSH_KEY")           # SSH key path
+DHCP_SSH_PASSWORD = os.getenv("DHCP_SSH_PASSWORD")      # SSH password for the user
+DHCP_SSH_PORT = os.getenv("DHCP_SSH_PORT")              # SSH port for the user
+TFTP_SERVER = os.getenv("TFTP_SERVER")                  #  remote TFTP server IP

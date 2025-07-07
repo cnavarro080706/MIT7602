@@ -8,29 +8,13 @@ class Device(models.Model):
     vlan_ip = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True)
     vlan_subnet_mask = models.PositiveIntegerField(default=31, blank=True, null=True)
     management_ip = models.GenericIPAddressField(protocol='IPv4', default='0.0.0.0', blank=True, null=True)
+    management_mac_add = models.CharField(max_length=255, blank=True, null=True)
     management_default_gateway = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True)
-    routing = models.CharField(max_length=20, choices=[
-        ('BGP', 'bgp'),
-        ('OSPF', 'ospf'),
-        ('EIGRP', 'eigrp')
-    ], default='BGP')
     vendor = models.CharField(max_length=20, choices=[
         ('arista', 'arista'),
         ('cisco', 'cisco'),
         ('juniper', 'juniper')
     ], default='arista')
-    ospf_process_id = models.PositiveIntegerField(blank=True, null=True)
-    eigrp_as = models.PositiveIntegerField(blank=True, null=True)
-    bgp_as_leaf = models.PositiveIntegerField(blank=True, null=True, default='0000')
-    ibgp_asn = models.PositiveIntegerField(blank=True, null=True, default='0000')
-    bgp_as_spine = models.PositiveIntegerField(blank=True, null=True, default='0000')
-    router_id = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
-    bgp_neighbor_leaf = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
-    bgp_neighbor_spine1 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
-    bgp_neighbor_spine2 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
-    bgp_neighbor_spine3 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
-    bgp_neighbor_spine4 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
-    networks = models.JSONField(default=dict, blank=True, null=True)
     device_model= models.CharField(max_length=255)
     network_tier = models.CharField(max_length=20, choices=[
         ('leaf', 'leaf'),
@@ -39,10 +23,10 @@ class Device(models.Model):
     lbcode = models.CharField(max_length=255, default='ph01', blank=True, null=True)
     x_position = models.IntegerField(default=0)  # Add this field for x-coordinate
     y_position = models.IntegerField(default=0)  # Add this field for y-coordinate
-    status = models.CharField(max_length=20, choices=[
-    ('active', 'active'),
-    ('under deployment', 'under_deployment'),
-    ('decommissioned', 'decommissioned')
+    status = models.CharField(max_length=50, choices=[
+    ('active', 'Active'),
+    ('under_deployment', 'Under Deployment'),
+    ('decommissioned', 'Decommissioned')
     ], default='under_deployment', null=True, blank=True)
     role = models.CharField(max_length=20, choices=[
         ('layer2', 'layer2'),
@@ -53,8 +37,24 @@ class Device(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # BGP Fields
+    bgp_as_leaf = models.PositiveIntegerField(blank=True, null=True, default='0000')
+    ibgp_asn = models.PositiveIntegerField(blank=True, null=True, default='0000')
+    bgp_as_spine = models.PositiveIntegerField(blank=True, null=True, default='0000')
+    router_id = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
+    bgp_neighbor_leaf = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
+    bgp_neighbor_spine1 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
+    bgp_neighbor_spine2 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
+    bgp_neighbor_spine3 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
+    bgp_neighbor_spine4 = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True, default='0.0.0.0')
+    bgp_networks = models.JSONField(default=dict, blank=True)
+
+    # OSPF Fields
+    ospf_process_id = models.PositiveIntegerField(blank=True, null=True)
+    ospf_networks = models.JSONField(default=dict, blank=True)
+
     def __str__(self):
-        return self.hostname
+        return self.hostname 
 
 class Interface(models.Model):
     device = models.ForeignKey(Device, related_name='interfaces', on_delete=models.CASCADE)

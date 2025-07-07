@@ -44,7 +44,7 @@ def validate_device_compliance(request):
                     "ntp": "ntp server" in config_content,
                     "ip_routing": "ip routing" in config_content,
                     "vlan_4001": "vlan 4001" in config_content,
-                    "svi_vlan4001": "interface Vlan4001" in config_content,
+                    "svi_vlan4001": "interface vlan4001" in config_content,
                     "port_channel100": "interface Port-Channel100" in config_content,
                     "ospf": "router ospf" in config_content,
                     "ospf_id": "router ospf" in config_content,

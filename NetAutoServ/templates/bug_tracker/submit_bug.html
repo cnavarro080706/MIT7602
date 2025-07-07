@@ -1,0 +1,18 @@
+<button type="button" onclick="openModal()">Report Bug</button>
+<div id="bugModal" style="display: none;">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+    <button onclick="closeModal()">Close</button>
+</div>
+
+<script>
+function openModal() {
+    document.getElementById("bugModal").style.display = "block";
+}
+function closeModal() {
+    document.getElementById("bugModal").style.display = "none";
+}
+</script>
