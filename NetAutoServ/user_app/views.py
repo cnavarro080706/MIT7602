@@ -54,23 +54,29 @@ def register(request):
             new_user.save()
             assign_all_permissions(new_user) 
 
-            Profile.objects.create(user=new_user)
+            # Modified this part to prevent duplicate profiles
+            profile, created = Profile.objects.get_or_create(user=new_user)
+            if not created:
+                print(f"Profile already existed for user {new_user.username}")
+                # Update any default profile fields if needed
+                profile.save()
+
             context = {'message': 'Registration successful'}
-            messages.success(request, f'Your account {new_user.username} is created successfully!',)
+            messages.success(request, f'Your account {new_user.username} is created successfully!')
             
             logger.info(f"New user registered: {new_user.username} (Login ID: {new_user.profile.login_id})")
             print("Registration successful. Redirecting to login page.")
             return redirect('login')
 
         else:
-            messages.error(request, "Error")
-            print("Form is not valid")
+            messages.error(request, "Error in form submission")
+            print("Form errors:", user_form.errors)
     else:
         user_form = UserRegistrationForm()
     
     context = {
         'user_form': user_form,
-        }
+    }
     print("Rendering registration page")
     return render(request, 'user_app/register.html', context)
 

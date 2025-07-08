@@ -5,24 +5,33 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 import uuid
+import os
 
-
-# Create your models here.
-# Function to generate the upload path within the 'users' app directory
 def user_directory_path(instance, filename):
-    # file will be uploaded to 'user_app/<username>/<filename>'
     return f'user_app/{instance.user.username}/{filename}'
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(
-    default='media/default.png',  
-    upload_to=user_directory_path,
-    blank=True
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='profile'  # Important for signal to work properly
     )
-    login_id = models.CharField(max_length=50, unique=True, blank=False, editable=False, null=False)
+    image = models.ImageField(
+        default='default.png',  # Remove 'media/' prefix - Django adds it automatically
+        upload_to=user_directory_path,
+        blank=True
+    )
+    login_id = models.CharField(max_length=50, unique=True, blank=False, editable=False)
     reset_token = models.CharField(max_length=64, blank=True, null=True)
     token_expiry = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'], 
+                name='unique_user_profile'
+            )
+        ]
 
     def __str__(self):
         return f'{self.user.username} Profile'
@@ -33,13 +42,11 @@ class Profile(models.Model):
         super().save(*args, **kwargs)
 
     def generate_unique_login_id(self):
-        """ Generate a unique login ID """
         while True:
-            login_id = str(uuid.uuid4())[:8]  # Generate an 8-character unique ID
+            login_id = str(uuid.uuid4())[:8]
             if not Profile.objects.filter(login_id=login_id).exists():
                 return login_id
 
-# this model will capture the logging activities 
 class UserActivityLog(models.Model):
     device = models.ForeignKey(Device, on_delete=models.SET_NULL, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -52,12 +59,13 @@ class UserActivityLog(models.Model):
         return f'{self.user.username} - {self.action} on {self.timestamp}'
 
 @receiver(post_save, sender=User)
-def create_or_update_user_profile(sender, instance, created, **kwargs):
+def create_user_profile(sender, instance, created, **kwargs):
+    """Creates a profile when a new user is created"""
     if created:
         Profile.objects.get_or_create(user=instance)
-    else:
-        instance.profile.save()
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    """Saves the profile when the user is saved"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
