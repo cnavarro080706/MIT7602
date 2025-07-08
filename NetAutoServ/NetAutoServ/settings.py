@@ -151,18 +151,18 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "ndas.user.reset.pw@gmail.com" 
-EMAIL_HOST_PASSWORD = "eysxrlvacwsfolkl"
-DEFAULT_FROM_EMAIL = "NDAS Email Confirmation <ndas.user.reset.pw@gmail.com>"
+EMAIL_HOST_USER = os.getenv("MAIL_HOST")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PW_RESET")
+DEFAULT_FROM_EMAIL = "NDAS Email Confirmation"
 
 SITE_NAME = "NDAS"
-SUPPORT_EMAIL = "ndas.sme@gmail.com"
+SUPPORT_EMAIL = os.getenv("NDAS_EMAIL_SUPPORT")
 
 # Additional email credentials for password reset
-EMAIL_PW_RESET_USER = "ndas.user.reset.pw@gmail.com"
-EMAIL_PW_RESET_PASS = "eysxrlvacwsfolkl"
+EMAIL_PW_RESET_USER = os.getenv("MAIL_HOST")  # Email account used for password reset
+EMAIL_PW_RESET_PASS = os.getenv("EMAIL_PW_RESET")  # Password for the email account used for password resets
 
-SME_EMAILS = ["herpidz06@gmail.com", "ejnavarro06@gmail.com"]
+# SME_EMAILS = ["herpidz06@gmail.com", "ejnavarro06@gmail.com"]
 
 # DHCP Server Configuration
 DHCP_SERVER = os.getenv("DHCP_SERVER")                  # my remote Ubuntu DHCP server
