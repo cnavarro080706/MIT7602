@@ -146,6 +146,9 @@ LOGIN_URL = '/login/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+# For production (AWS will override this)
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 # For all other emails (or use the same account)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
@@ -171,3 +174,12 @@ DHCP_SSH_KEY_PATH = os.getenv("DHCP_SSH_KEY")           # SSH key path
 DHCP_SSH_PASSWORD = os.getenv("DHCP_SSH_PASSWORD")      # SSH password for the user
 DHCP_SSH_PORT = os.getenv("DHCP_SSH_PORT")              # SSH port for the user
 TFTP_SERVER = os.getenv("TFTP_SERVER")                  #  remote TFTP server IP
+
+# For S3 (when you move to AWS)
+# AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+# AWS_STORAGE_BUCKET_NAME = 'your-bucket-name'
+# AWS_S3_REGION_NAME = 'your-region'
+# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+# AWS_DEFAULT_ACL = 'public-read'
+

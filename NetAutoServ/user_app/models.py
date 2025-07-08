@@ -15,7 +15,11 @@ def user_directory_path(instance, filename):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(default='default.png', upload_to=user_directory_path, blank=True)
+    image = models.ImageField(
+    default='media/default.png',  
+    upload_to=user_directory_path,
+    blank=True
+    )
     login_id = models.CharField(max_length=50, unique=True, blank=False, editable=False, null=False)
     reset_token = models.CharField(max_length=64, blank=True, null=True)
     token_expiry = models.DateTimeField(blank=True, null=True)
@@ -46,3 +50,12 @@ class UserActivityLog(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.action} on {self.timestamp}'
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
