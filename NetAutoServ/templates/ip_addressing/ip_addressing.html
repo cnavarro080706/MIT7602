@@ -1,0 +1,523 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load ip_filters %}
+
+{% block title %} IP Address Management {% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show w-100" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<div class="container-fluid mt-4">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <!-- Search Filter Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Subnet Search</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="subnet-search" class="form-control" placeholder="Search subnets...">
+                        <button class="btn btn-outline-secondary" type="button" id="search-button">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <button class="btn btn-outline-danger" type="button" id="reset-search">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                    </div>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="show-available">
+                        <label class="form-check-label" for="show-available">Show Available Only</label>
+                    </div>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="show-used">
+                        <label class="form-check-label" for="show-used">Show Used Only</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Subnet Blocks</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Network</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col" class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for block in blocks %}
+                                    <tr class="subnet-row" data-subnet="{{ block.network }}">
+                                        <td class="align-middle">{{ block.network }}</td>
+                                        <td class="align-middle">{{ block.description }}</td>
+                                        <td class="text-end">
+                                            <!-- Edit button -->
+                                            <a href="{% url 'ipam:edit_block' pk=block.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </a>
+                                            <!-- Delete button - verify block.pk exists -->
+                                            <!-- <p>Debug: Block PK is {{ block.pk }}</p> -->
+                                            {% if block %}
+                                                <a href="{% url 'ipam:delete_block' pk=block.pk %}" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                        <a href="{% url 'ipam:add_block' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add New Block
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Add this to the right column -->
+        <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="h5 mb-0">Subnet Breakdown</h2>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-light" id="export-csv">
+                        <i class="bi bi-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="overflow-y: auto; max-height: 90vh;">
+                <div id="subnet-details">
+                    <div class="alert alert-info">
+                        Select a subnet or use search to view details
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Subnet selection handler
+        document.querySelectorAll('.subnet-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const subnet = this.getAttribute('data-subnet');
+                loadSubnetDetails(subnet);
+            });
+        });
+
+        // Search functionality
+        const searchButton = document.getElementById('search-button');
+        const resetButton = document.getElementById('reset-search');
+        const searchInput = document.getElementById('subnet-search');
+        const showAvailable = document.getElementById('show-available');
+        const showUsed = document.getElementById('show-used');
+
+        searchButton.addEventListener('click', performSearch);
+        resetButton.addEventListener('click', resetSearch);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+        showAvailable.addEventListener('change', performSearch);
+        showUsed.addEventListener('change', performSearch); 
+
+        // CSV export
+        document.getElementById('export-csv').addEventListener('click', exportToCSV);
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            const availableOnly = showAvailable.checked;
+            const usedOnly = showUsed.checked;
+
+             // Show loading indicator
+            document.getElementById('subnet-details').innerHTML = `
+                <div class="text-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Searching subnets...</p>
+                </div>
+            `;
+
+            fetch(`{% url 'ipam:search_subnets' %}?q=${encodeURIComponent(searchTerm)}&available=${availableOnly}&used=${usedOnly}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            showAlert('danger', data.error || 'Search failed');
+                            return;
+                        }
+
+                        if (data.results.length === 0) {
+                            showAlert('info', 'No matching subnets found');
+                            return;
+                        }
+
+                        renderSearchResults(data.results, searchTerm, data.count);
+                    })
+                    .catch(error => {
+                        showAlert('danger', 'Network error during search');
+                        console.error('Search error:', error);
+                    });
+            }
+
+        function resetSearch() {
+            searchInput.value = '';
+            showAvailable.checked = false;
+            showUsed.checked = false;
+            document.getElementById('subnet-details').innerHTML = `
+                <div class="alert alert-info">
+                    Select a subnet or use search to view details
+                </div>
+            `;
+        }
+
+        function loadSubnetDetails(subnet) {
+            fetch(`{% url 'ipam:subnet_details' %}?subnet=${subnet}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showAlert('danger', data.error);
+                        return;
+                    }
+                    renderSubnetDetails(data);
+                });
+        }
+
+            function renderSearchResults(results, searchTerm, totalCount) {
+                let html = `
+                    <h5>Search Results (${totalCount} matches${searchTerm ? ` for "${searchTerm}"` : ''})</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Subnet</th>
+                                    <th>Type</th>
+                                    <th>Block</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                results.forEach(result => {
+                    html += `
+                        <tr>
+                            <td>${result.subnet}</td>
+                            <td>${result.type}</td>
+                            <td>${result.network_block}</td>
+                            <td>
+                                <span class="badge ${result.status === 'Used' ? 'bg-success' : 'bg-warning'}">
+                                    ${result.status}
+                                </span>
+                            </td>
+                            <td>${result.assigned_to}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary view-details" 
+                                        data-subnet="${result.subnet}">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                
+                document.getElementById('subnet-details').innerHTML = html;
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-details').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadSubnetDetails(this.getAttribute('data-subnet'));
+                    });
+                });
+            }
+
+            function renderSubnetDetails(data) {
+                // Calculate utilization
+                const usedSubnets = data.subnets.filter(s => s.status === 'Used').length;
+                const totalSubnets = data.subnets.length;
+                const utilization = totalSubnets > 0 ? Math.round((usedSubnets / totalSubnets) * 100) : 0;
+
+                let html = `
+                    <h5>${data.network}</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Netmask:</strong> ${data.netmask}</p>
+                            <p><strong>Total Addresses:</strong> ${data.total_addresses}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Usable Hosts:</strong> ${data.usable_hosts}</p>
+                            <p><strong>Utilization:</strong> 
+                                <span class="badge bg-${utilization > 80 ? 'danger' : utilization > 50 ? 'warning' : 'success'}">
+                                    ${utilization}%
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-3">Subnet Assignments</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Subnet</th>
+                                    <th>Type</th>
+                                    <th>Assigned To</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Helper: IP string to number
+                function ipToNumber(ip) {
+                    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+                }
+
+                // Define custom type priorities
+                const typePriority = {
+                    'management': 1,
+                    'loopback': 2,
+                    'point-to-point': 3,
+                    'data vlan': 4,
+                    'voice vlan': 5,
+                    'server vlan': 6,
+                    'unassigned': 7,
+                    '': 99
+                };
+
+                // Sort subnets by type and IP
+                data.subnets.sort((a, b) => {
+                    const typeA = (a.type || '').toLowerCase();
+                    const typeB = (b.type || '').toLowerCase();
+                    const priorityA = typePriority[typeA] || 99;
+                    const priorityB = typePriority[typeB] || 99;
+
+                    if (priorityA !== priorityB) {
+                        return priorityA - priorityB;
+                    }
+
+                    // If types are equal, sort by IP
+                    const ipA = ipToNumber(a.subnet.split('/')[0]);
+                    const ipB = ipToNumber(b.subnet.split('/')[0]);
+                    return ipA - ipB;
+                });
+
+                data.subnets.forEach(subnet => {
+                    const subnetType = (subnet.type || '').toLowerCase();
+                    const isManagement = subnetType.includes('management');
+                    const isLoopback = subnetType.includes('loopback');
+                    const isPointToPoint = subnetType.includes('point');
+                    const is24Subnet = subnet.subnet.endsWith('/24');
+                    
+                    // Show View Prefixes for /24 Management, Loopback or Point-to-Point
+                    const showViewPrefixes = is24Subnet && (isManagement || isLoopback || isPointToPoint);
+                    
+                    // Create action buttons
+                    let actionButtons = 'N/A';
+                    if (showViewPrefixes) {
+                        actionButtons = `
+                            <button class="btn btn-sm btn-outline-primary view-prefixes" 
+                                    data-subnet="${subnet.subnet}"
+                                    data-type="${subnet.type}">
+                                <i class="bi bi-list-ul"></i> View Prefixes
+                            </button>
+                        `;
+                    } else if (subnet.status === 'Available') {
+                        actionButtons = `
+                            <button class="btn btn-sm btn-outline-success assign-subnet" 
+                                    data-subnet="${subnet.subnet}">
+                                <i class="bi bi-plus-circle"></i> Assign
+                            </button>
+                        `;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${subnet.subnet}</td>
+                            <td>${subnet.type}</td>
+                            <td>${subnet.assigned_to || 'Not assigned'}</td>
+                            <td>
+                                <span class="badge ${subnet.status === 'Used' ? 'bg-success' : 'bg-warning'}">
+                                    ${subnet.status}
+                                </span>
+                            </td>
+                            <td>${actionButtons}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                document.getElementById('subnet-details').innerHTML = html;
+
+                // Add event listeners to View Prefixes buttons
+                document.querySelectorAll('.view-prefixes').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const subnet = this.getAttribute('data-subnet');
+                        const type = this.getAttribute('data-type');
+                        viewPrefixBreakdown(subnet, type);  
+                    });
+                });
+            }
+
+            function viewPrefixBreakdown(subnet, type) {
+                // Show loading indicator
+                document.getElementById('subnet-details').innerHTML = `
+                    <div class="text-center my-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Generating ${type.toLowerCase().includes('loopback') ? '/32 addresses' : 
+                        type.toLowerCase().includes('management') ? '/32 addresses' : '/31 subnets'}...</p>
+                    </div>
+                `;
+
+                fetch(`/ipam/prefixes/${encodeURIComponent(subnet)}/`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || 'Network response was not ok');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to generate prefix breakdown');
+                    }
+                    renderPrefixBreakdown(data);
+                })
+                .catch(error => {
+                    showAlert('danger', error.message || 'Error loading prefix details');
+                    console.error('Prefix breakdown error:', error);
+                    // Restore the previous view
+                    loadSubnetDetails(subnet);
+                });
+            }
+
+            function renderPrefixBreakdown(data) {
+                const subnetType = (data.type || '').toLowerCase();
+                const isLoopback = subnetType.includes('loopback');
+                const isManagement = subnetType.includes('management');
+
+                let html = `
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>${data.type} Prefixes in ${data.parent_network}</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="loadSubnetDetails('${data.parent_network}')">
+                            <i class="bi bi-arrow-left"></i> Back to Parent
+                        </button>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Showing ${data.total} ${isLoopback || isManagement ? '/32 addresses' : '/31 subnets'}
+                        <span class="badge bg-success ms-2">${data.used} Used</span>
+                        <span class="badge bg-warning ms-2">${data.available} Available</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Prefix</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                // Convert IP string to a sortable number
+                function ipToNumber(ip) {
+                    return ip.split('.').reduce((acc, octet, i) => acc + (parseInt(octet) << (8 * (3 - i))), 0);
+                }
+
+                // Sort prefixes by IP address
+                data.prefixes.sort((a, b) => {
+                    return ipToNumber(a.subnet.split('/')[0]) - ipToNumber(b.subnet.split('/')[0]);
+                });
+
+                data.prefixes.forEach(prefix => {
+                    html += `
+                        <tr>
+                            <td>${prefix.subnet}</td>
+                            <td>${prefix.type || 'Unassigned'}</td>
+                            <td>
+                                <span class="badge ${prefix.status === 'Used' ? 'bg-success' : 'bg-warning'}">
+                                    ${prefix.status}
+                                </span>
+                            </td>
+                            <td>${prefix.assigned_to || 'Not assigned'}</td>
+                            <td>
+                                ${prefix.status === 'Available' ? `
+                                <button class="btn btn-sm btn-outline-primary assign-prefix" 
+                                        data-subnet="${prefix.subnet}">
+                                    <i class="bi bi-plus-circle"></i> Assign
+                                </button>
+                                ` : 'N/A'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                document.getElementById('subnet-details').innerHTML = html;
+
+                document.querySelectorAll('.assign-prefix').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const subnet = this.getAttribute('data-subnet');
+                        assignPrefix(subnet);
+                    });
+                });
+            }
+        function exportToCSV() {
+            // Implement CSV export logic here
+            alert('CSV export functionality would be implemented here');
+        }
+
+        function showAlert(type, message) {
+            document.getElementById('subnet-details').innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+        
+
+    });
+
+    // Add this event listener for the View Prefixes buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-prefixes-btn')) {
+            e.preventDefault();
+            const subnet = e.target.closest('.view-prefixes-btn').dataset.subnet;
+            window.location.href = `/ipam/prefixes/${encodeURIComponent(subnet)}/`;
+        }
+    });
+
+</script>
+{% endblock %}

@@ -5,7 +5,7 @@ class DeviceForm(forms.ModelForm):
     class Meta:
         model = Device
         fields = [
-            'hostname', 'loopback_ip','vlan_id','vlan_ip', 'vlan_subnet_mask','management_ip','management_mac_add',
+            'hostname', 'loopback_ip','vlan_id','vlan_ip', 'vlan_subnet_mask','management_ip','management_mac_address',
             'management_default_gateway','vendor','router_id','bgp_as_leaf','bgp_as_spine', 
             'bgp_neighbor_leaf','bgp_neighbor_spine1','bgp_neighbor_spine2', 'bgp_neighbor_spine3', 'bgp_neighbor_spine4',
             'device_model','network_tier','lbcode','role','status','bgp_networks','ospf_networks','ibgp_asn', 'ospf_process_id',
@@ -17,7 +17,7 @@ class DeviceForm(forms.ModelForm):
             'vlan_ip': forms.TextInput(attrs={'class': 'form-control'}),
             'vlan_subnet_mask': forms.NumberInput(attrs={'class': 'form-control'}),
             'management_ip': forms.TextInput(attrs={'class': 'form-control'}),
-            'management_mac_add': forms.TextInput(attrs={'class': 'form-control'}),
+            'management_mac_address': forms.TextInput(attrs={'class': 'form-control'}),
             'management_gw': forms.TextInput(attrs={'class': 'form-control'}),
             'router_id': forms.TextInput(attrs={'class': 'form-control'}),
             'vendor': forms.Select(attrs={'class': 'form-select'}),
@@ -42,11 +42,11 @@ class DeviceForm(forms.ModelForm):
 class InterfaceForm(forms.ModelForm):
     class Meta:
         model = Interface
-        fields = ['device','interface', 'description', 'ip', 'subnet_mask']
+        fields = ['device','interface_name', 'description', 'ip_address', 'subnet_mask']
         widgets = {
             'device': forms.Select(attrs={'class': 'form-select'}),
-            'interface': forms.TextInput(attrs={'class': 'form-control'}),
+            'interface_name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control'}),
-            'ip': forms.TextInput(attrs={'class': 'form-control'}),
+            'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
             'subnet_mask': forms.NumberInput(attrs={'class': 'form-control'}),
         }

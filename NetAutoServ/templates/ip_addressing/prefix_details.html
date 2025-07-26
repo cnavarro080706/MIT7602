@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load ip_filters %}
+
+{% block title %}Prefix Breakdown - {{ parent_network }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Prefix Breakdown: {{ parent_network }} ({{ prefix_type }})</h2>
+            <a href="{% url 'ipam:dashboard' %}" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Showing {{ total }} {{ prefix_type }} prefixes 
+                ({{ used }} used, {{ available }} available)
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Prefix</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Assigned To</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prefix in prefixes|sort_by_ip %}
+                        <tr>
+                            <td>{{ prefix.subnet }}</td>
+                            <td>{{ prefix.type }}</td>
+                            <td>
+                                <span class="badge bg-{% if prefix.status == 'Used' %}success{% else %}warning{% endif %}">
+                                    {{ prefix.status }}
+                                </span>
+                            </td>
+                            <td>{{ prefix.assigned_to }}</td>
+                            <td>
+                                {% if prefix.status == 'Available' %}
+                                <button class="btn btn-sm btn-outline-primary assign-prefix" 
+                                        data-prefix="{{ prefix.subnet }}">
+                                    <i class="bi bi-plus-circle"></i> Assign
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled>
+                                    <i class="bi bi-lock"></i> Manage
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle prefix assignment
+    document.querySelectorAll('.assign-prefix').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prefix = this.getAttribute('data-prefix');
+            alert(`Would assign prefix: ${prefix}\nImplement this functionality as needed.`);
+            // You would typically open a modal or redirect to an assignment form
+        });
+    });
+});
+</script>
+{% endblock %}

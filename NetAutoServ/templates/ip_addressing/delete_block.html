@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h2 class="h5 mb-0">Delete Subnet Block</h2>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% if block %}
+                <p>Are you sure you want to delete subnet block <strong>{{ block.network }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone and will delete all associated subnet assignments.</p>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                    <a href="{% url 'ipam:dashboard' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            {% else %}
+                <div class="alert alert-warning">
+                    Subnet block not found or already deleted
+                </div>
+                <a href="{% url 'ipam:dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -28,6 +28,7 @@ urlpatterns = [
     path('', include('emulator_app.urls')),
     path('', include('compliance_app.urls')),
     path('', include('bug_tracker.urls')),
+    path('', include('ip_addressing.urls')),
 
 ]
 urlpatterns+=static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)

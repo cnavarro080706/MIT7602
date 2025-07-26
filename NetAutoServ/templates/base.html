@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="{% static 'ndas_app/styles.css' %}">
     <link rel="stylesheet" href="{% static 'naas_app/styles.css' %}">
     <link rel="stylesheet" href="{% static 'user_app/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'ip_addressing/styles.css' %}">
     <!-- <link rel="stylesheet" href="{% static 'device_app/styles.css' %}"> -->
    
 
@@ -88,6 +89,9 @@
                         </li>
                         <li class="sidebar-item">
                             <a href="{% url 'compliance_list' %}" class="sidebar-link text-decoration-none">Policy Compliance</a>
+                        </li>
+                         <li class="sidebar-item">
+                            <a href="{% url 'ipam:dashboard' %}" class="sidebar-link text-decoration-none">IPAM</a>
                         </li>
                     </ul>
                 </li>
@@ -206,5 +210,6 @@ document.addEventListener("DOMContentLoaded", function () {
     <script src="{% static 'naas_app/script.js' %}"></script>
     <script src="{% static 'user_app/script.js' %}"></script>
     <script src="{% static 'compliance_app/script.js' %}"></script>
+    <!-- <script src="{% static 'ip_addressing/script.js' %}"></script> -->
 
 </html>

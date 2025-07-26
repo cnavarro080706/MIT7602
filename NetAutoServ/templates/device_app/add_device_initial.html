@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %} Add Device {% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+  <div class="d-flex justify-content-center">
+    <div class="card" style="width: 40rem;">
+      <div class="card-header text-primary">
+        <h3>Add New Device</h3>
+      </div>
+      <form method="POST" action="{% url 'add_device_initial' %}" class="bg-white shadow rounded p-4">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="hostname" class="form-label">Device Hostname</label>
+          <input type="text" class="form-control" id="hostname" name="hostname" placeholder="e.g. rphvy99-lea1001-7280" required>
+          <div class="form-text"><small>Format: r{country_code}{location_code}-{device_type}{number}-{vendor_model}</small></div>
+        </div>
+        <div class="mb-3">
+          <label for="deployment_type" class="form-label">Deployment Type</label>
+          <select class="form-select" id="deployment_type" name="deployment_type" required>
+            <option value="single">Single Device</option>
+            <option value="pair">Paired Devices</option>
+          </select>
+          <small id="deploymentHint" class="form-text text-muted mt-1">
+            Select "Paired Devices" to deploy two adjacent leafs (e.g., lea1001 and lea1002)
+          </small>
+        </div>
+        <div class="mb-3">
+          <label for="platform" class="form-label">Device Platform</label>
+          <select class="form-select" id="platform" name="platform" required>
+            <option value="">Select Platform</option>
+            <option value="eos">Arista EOS</option>
+            <option value="nxos">Cisco NX-OS</option>
+            <option value="ios">Cisco IOS</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <span id="submitText">Check Availability</span>
+          <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        </button>
+        <a href="{% url 'device_list' %}" class="btn btn-secondary">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="mt-3">Processing your request...</h5>
+        <p class="text-muted">This may take a few moments</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Validation Results Modal -->
+<div class="modal fade" id="validationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Validation Result</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="validationMessage">
+        <!-- Message will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" id="proceedBtn" class="btn btn-primary" style="display:none;">Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form');
+  const submitBtn = document.getElementById('submitBtn');
+  const submitText = document.getElementById('submitText');
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+
+  const deploymentSelect = document.getElementById('deployment_type');
+  const deploymentHint = document.getElementById('deploymentHint');
+
+  deploymentSelect.addEventListener('change', function () {
+    if (this.value === 'pair') {
+      deploymentHint.textContent = 'Both devices will be created (e.g., lea1001 and lea1002). Make sure hostname uses the odd number.';
+    } else {
+      deploymentHint.textContent = 'Only the specified device will be added.';
+    }
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    loadingModal.show();
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: formData
+    })
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => {
+        loadingModal.hide();
+
+        const validationModal = new bootstrap.Modal(document.getElementById('validationModal'));
+        const message = document.getElementById('validationMessage');
+        const proceedBtn = document.getElementById('proceedBtn');
+
+        if (data.valid) {
+          const platformNames = {
+            'eos': 'Arista EOS',
+            'nxos': 'Cisco NX-OS',
+            'ios': 'Cisco IOS'
+          };
+          const platformDisplay = platformNames[data.platform.toLowerCase()] || data.platform;
+          const deploymentMode = formData.get('deployment_type') === 'pair' ? 'Paired Devices' : 'Single Device';
+
+          message.innerHTML = `
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle-fill"></i> Hostname is available!
+            </div>
+            <p><strong>Platform:</strong> ${platformDisplay}</p>
+            <p><strong>Deployment:</strong> ${deploymentMode}</p>
+          `;
+          proceedBtn.style.display = 'block';
+          proceedBtn.onclick = function () {
+            loadingModal.show();
+            window.location.href = data.redirect_url;
+          };
+        } else {
+          message.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle-fill"></i> ${data.message}
+            </div>
+          `;
+          proceedBtn.style.display = 'none';
+        }
+
+        validationModal.show();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        loadingModal.hide();
+        const validationModal = new bootstrap.Modal(document.getElementById('validationModal'));
+        document.getElementById('validationMessage').innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> An error occurred while checking availability
+          </div>
+          <p class="text-muted">${error.message}</p>
+        `;
+        validationModal.show();
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitText.textContent = 'Check Availability';
+        loadingSpinner.classList.add('d-none');
+      });
+  });
+});
+</script>
+
+<style>
+.spinner-border {
+  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+.modal-backdrop {
+  z-index: 1040 !important;
+}
+</style>
+{% endblock %}

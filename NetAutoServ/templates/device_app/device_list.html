@@ -23,7 +23,7 @@
             <h1>Devices</h1>
             <div class="d-flex justify-content-between align-items-center mb-2"> 
                 <div class="me-2">
-                <a href="{% url 'add_device' %}" class="btn btn-primary btn-sm">Add Device</a>
+                <a href="{% url 'add_device_initial' %}" class="btn btn-primary btn-sm">Add Device</a>
                 </div>
                 <!-- <div class="d-flex ms-auto">
                     <a href="{% url 'naas' %}" class="btn btn-sm btn-info me-2"><i class="bi bi-rocket-takeoff" title="Generate Config"></i></a>
@@ -39,13 +39,10 @@
                         <th>Vendor</th>
                         <th>LBCode</th>
                         <th>Loopback IP</th>
-                        <th>Leaf ASN</th>
-                        <th>Spine ASN</th>
+                        <th>Management IP</th>
+                        <th>AS Number</th>
+                        <th>iBGP ASN</th>
                         <th>InterSwitch</th>
-                        <th>Spine1</th>
-                        <th>Spine2</th>
-                        <th>Spine3</th>
-                        <th>Spine4</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -74,13 +71,10 @@
                         <td>{{ device.vendor }}</td>
                         <td>{{ device.lbcode }}</td>
                         <td>{{ device.loopback_ip }}</td>
+                        <td>{{ device.management_ip }}</td>
                         <td>{{ device.bgp_as_leaf }}</td>
-                        <td>{{ device.bgp_as_spine }}</td>
-                        <td>{{ device.vlan_ip }}/31</td>
-                        <td>{{ device.bgp_neighbor_spine1 }}/31</td>
-                        <td>{{ device.bgp_neighbor_spine2 }}/31</td>
-                        <td>{{ device.bgp_neighbor_spine3 }}/31</td>
-                        <td>{{ device.bgp_neighbor_spine4 }}/31</td>
+                        <td>{{ device.ibgp_asn }}</td>
+                        <td>{{ device.bgp_neighbor_leaf }}</td>
                         <td>
                             <a href="#" class="btn btn-primary btn-sm" onclick="loadConfig({{ device.id }})">
                                 <i class="bi bi-eye" title="View Configuration"></i>
